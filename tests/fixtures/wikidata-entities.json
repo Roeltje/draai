@@ -1,0 +1,22 @@
+{
+  "entities": {
+    "Q100": {
+      "id": "Q100",
+      "labels": {"nl": {"value": "Voorbeeldalbum"}},
+      "sitelinks": {"nlwiki": {"title": "Voorbeeldalbum"}, "enwiki": {"title": "Example album"}},
+      "claims": {
+        "P1954": [{"rank": "normal", "mainsnak": {"snaktype": "value", "datavalue": {"value": "123"}}}],
+        "P577": [{"rank": "normal", "mainsnak": {"snaktype": "value", "datavalue": {"value": {"time": "+1970-10-28T00:00:00Z", "precision": 11, "calendarmodel": "http://www.wikidata.org/entity/Q1985727", "before": 0, "after": 0, "timezone": 0}}}}]
+      }
+    },
+    "Q200": {
+      "id": "Q200",
+      "labels": {"en": {"value": "Example Musician"}},
+      "claims": {
+        "P1953": [{"rank": "normal", "mainsnak": {"snaktype": "value", "datavalue": {"value": "42"}}}],
+        "P569": [{"rank": "normal", "mainsnak": {"snaktype": "value", "datavalue": {"value": {"time": "+1940-10-28T00:00:00Z", "precision": 11, "calendarmodel": "http://www.wikidata.org/entity/Q1985727", "before": 0, "after": 0, "timezone": 0}}}}],
+        "P570": [{"rank": "normal", "mainsnak": {"snaktype": "value", "datavalue": {"value": {"time": "+2010-02-28T00:00:00Z", "precision": 11, "calendarmodel": "http://www.wikidata.org/entity/Q1985727", "before": 0, "after": 0, "timezone": 0}}}}]
+      }
+    }
+  }
+}
