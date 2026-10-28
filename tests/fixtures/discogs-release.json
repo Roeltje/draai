@@ -1,0 +1,9 @@
+{
+  "id": 100,
+  "country": "NL",
+  "tracklist": [{"position": "A1", "title": "Fixture track", "duration": "4:00"}],
+  "extraartists": [
+    {"id": 42, "name": "Same name", "role": "Producer"},
+    {"id": 43, "name": "Same name", "role": "Guitar"}
+  ]
+}
