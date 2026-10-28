@@ -1,6 +1,7 @@
 # Voortgang — 28 oktober 2026
 
 ## Afgerond
+- Eigen SVG-favicon in ivoor, inktzwart en koraal; hetzelfde vinyl-icoon bovenaan de README.
 - Fase 0: projectstructuur, AGENTS.md, design tokens, mobiel/breed ontwerp met zes originele fictieve hoezen.
 - Fase 1: echte Discogs-adapter, paginering, detailverrijking, selectie, bevestigen, afronden, notities en geschiedenis in SQLite.
 - Eigen sfeerlabels, zoeken, formaatfilter en tijdelijke uitsluitingen.

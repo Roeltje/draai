@@ -1,3 +1,5 @@
+<img src="public/favicon.svg" alt="Draai: een vinylplaat met een koraalkleurig label" width="80" height="80">
+
 # Draai
 
 Draai helpt je opnieuw een plaat uit je eigen vinylcollectie te kiezen. Je kunt een stemming meegeven, een voorstel bevestigen en je luistersessie met een notitie bewaren. De app is bedoeld voor eigen gebruik op je thuisnetwerk.

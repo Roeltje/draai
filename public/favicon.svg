@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <title>Draai</title>
+  <rect width="64" height="64" rx="15" fill="#f3f0e8"/>
+  <circle cx="32" cy="32" r="26" fill="#24251f"/>
+  <g fill="none" stroke="#f3f0e8" stroke-linecap="round" opacity=".3">
+    <path d="M12 32a20 20 0 0 1 20-20M52 32a20 20 0 0 1-20 20"/>
+    <path d="M17 32a15 15 0 0 1 15-15M47 32a15 15 0 0 1-15 15"/>
+  </g>
+  <circle cx="32" cy="32" r="10" fill="#d46b4e"/>
+  <circle cx="32" cy="32" r="3" fill="#f3f0e8"/>
+</svg>
