@@ -1,7 +1,7 @@
 # Verificatie — 28 oktober 2026
 
 ## Uitgevoerde controles
-- 38 geautomatiseerde tests geslaagd: LP-formaten, aparte demo/live-opslag, sessie-idempotentie en herstart, selectie bij kleine collecties, persoonlijke sfeergewichten, volledige/onderbroken paginering, dubbele exemplaren, veilige verwerking van verwijderingen, versheid van metadata en details, gelijktijdige synchronisatie, rate-limitpacing en retries, WU-station/meetdatum, HTTP-validatie en herkomstcontrole, secrets niet in API-output, SSE/reconnect/heartbeat en offline clientverval. Nieuwe tests controleren exacte Wiki-identiteiten, onzekere datums, taal-fallback, rate limits, Amsterdamse kalenderdagen, schrikkeldag, begrensde datumweging, expliciete opt-in, caching en middernacht in een offline browser.
+- 43 geautomatiseerde tests geslaagd: LP-formaten, aparte demo/live-opslag, sessie-idempotentie en herstart, selectie bij kleine collecties, persoonlijke sfeergewichten, volledige/onderbroken paginering, dubbele exemplaren, veilige verwerking van verwijderingen, versheid van metadata en details, gelijktijdige synchronisatie, rate-limitpacing en retries, WU-station/meetdatum, HTTP-validatie en herkomstcontrole, secrets niet in API-output, SSE/reconnect/heartbeat en offline clientverval. Nieuwe tests controleren exacte Wiki-identiteiten, onzekere datums, taal-fallback, rate limits, Amsterdamse kalenderdagen, schrikkeldag, begrensde datumweging, expliciete opt-in, caching en middernacht in een offline browser.
 - `tsc --noEmit` geslaagd.
 - `vite build` geslaagd. Gecomprimeerde JavaScript circa 94 KB, CSS circa 9 KB.
 - In de browser bij 390×844 en 1280×800: home, kiezen, bevestigen, notitie invullen, afronden en geschiedenis bekeken. Geen horizontale overloop op de gecontroleerde homeweergaven.
@@ -16,6 +16,9 @@
 
 - Openbare Wiki-praktijktest met Kind of Blue: exact Discogs-master-ID 5460 gekoppeld aan Wikidata Q283221, Nederlandse Wikipedia-tekst (maximaal 600 tekens) en releasedatum 1959-08-17.
 - Nieuwe browsercontrole: fictief albumverhaal, vaste voorbeeldreleasedatum, datumkeuze uitzetten, expliciet kalenderalbum kiezen en achtergrondverhalen bijwerken.
+
+- LXC-installer: Bash-syntax/help, verkeerde platformomgeving vóór apt, ongeldige/tokenbevattende invoer, gecommitteerde Git-export zonder losse secrets, configuratie aanmaken/behouden en afwijzen van verkeerde checksums gecontroleerd. Vijf tests gebruiken tijdelijke bestanden en mocks; ze voeren geen apt/systemd uit.
+- Officiële Node 24-downloadindex live opgehaald: unieke Linux x64- en arm64-archieven met SHA256 gevonden (v24.22.1 op het controlemoment).
 
 ## Niet op echte diensten/hardware geverifieerd
 - Persoonlijk Discogs-token en WU-leessleutel ontbreken. Authenticated volledige import, echte releaseverrijking en live WU-meting zijn met fixtures getest, nog niet met deze accounts.
