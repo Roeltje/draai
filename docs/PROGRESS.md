@@ -1,13 +1,15 @@
 # Voortgang — 28 oktober 2026
 
 ## Afgerond
+- Eerste-installatiescript voor Ubuntu 24.04 in een ongeprivilegieerde LXC: apt-basis, officiële Node 24 met checksum, pnpm, bouw als niet-rootgebruiker, gescheiden data/config en systemd-healthcheck.
+- Privé-GitHub-download en token met uitsluitend leestoegang beschreven. Installer weigert bestaande deployments; automatische updates volgen later.
 - Eigen SVG-favicon in ivoor, inktzwart en koraal; hetzelfde vinyl-icoon bovenaan de README.
 - Fase 0: projectstructuur, AGENTS.md, design tokens, mobiel/breed ontwerp met zes originele fictieve hoezen.
 - Fase 1: echte Discogs-adapter, paginering, detailverrijking, selectie, bevestigen, afronden, notities en geschiedenis in SQLite.
 - Eigen sfeerlabels, zoeken, formaatfilter en tijdelijke uitsluitingen.
 - Werkende WU-adapter en metingstatus; geen verzonnen weerinvloed.
 - Optionele /display-weergave met live updates en QR-code bij gebruik van een LAN-adres.
-- Typecontrole, productiebuild en 38 tests geslaagd.
+- Typecontrole, productiebuild en 43 tests geslaagd (inclusief vijf installercontroles zonder echte LXC).
 - Mobiele luisterflow en brede schermweergave daadwerkelijk in browser gecontroleerd.
 - Back-up plus herstel gecontroleerd; startbestand voor deze Mac en LXC-service/handleiding geleverd.
 

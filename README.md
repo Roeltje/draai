@@ -12,6 +12,12 @@ In deze werkmap zijn de pakketten en productie-build al aanwezig. Dubbelklik op 
 
 Voor een verse download of andere computer volg je de installatie hieronder.
 
+## Installeren op Proxmox LXC
+
+Er is een [installatiescript](scripts/install-lxc.sh) voor een ongeprivilegieerde **Ubuntu 24.04 LTS-container**. Het installeert de basissoftware, Node.js 24, pnpm en Draai als automatisch startende dienst. Begin met 2 CPU’s, 2 GB RAM en 8 GB opslag. Omdat deze repository privé is, heeft de LXC een eigen GitHub-aanmelding met leestoegang nodig.
+
+Volg [de stapsgewijze LXC-handleiding](docs/INSTALLATIE.md#proxmox-lxc-aanbevolen-installatie). Voer het script binnen de container uit, niet op de Proxmox-host. Het is voor de eerste installatie; automatische app-updates zijn nog niet ingebouwd. De controles zijn lokaal gesimuleerd, een echte LXC-installatie is nog niet uitgevoerd.
+
 ## Snel starten
 
 Vereist Node.js 24 en pnpm. Installeer Node via de [officiële Node.js-downloads](https://nodejs.org/en/download/) en pnpm volgens de [officiële pnpm-installatiehandleiding](https://pnpm.io/installation). Gebruik geen Node-versie buiten 24.

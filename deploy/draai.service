@@ -10,7 +10,7 @@ Group=draai
 WorkingDirectory=/opt/draai
 EnvironmentFile=/etc/draai.env
 Environment=NODE_ENV=production
-ExecStart=/usr/bin/node node_modules/tsx/dist/cli.mjs server/index.ts
+ExecStart=/opt/draai-node/bin/node --import tsx server/index.ts
 Restart=on-failure
 RestartSec=5
 TimeoutStopSec=90
