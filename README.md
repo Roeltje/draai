@@ -56,7 +56,7 @@ Wiki-informatie heeft een aparte bewaartermijn van 30 dagen. Ontbrekende of verl
 
 De LXC-installer configureert `HOST=0.0.0.0`, `PORT=3210` en `DATA_DIR=/var/lib/draai` in `/etc/draai.env`. Zo kan een reverse proxy op een andere machine de app bereiken via HTTP op het LXC-adres en poort 3210. Voor rechtstreekse LAN-toegang open je `http://<server-ip>:3210` op je telefoon; `localhost` verwijst daar naar de telefoon zelf. De installer configureert zelf geen firewall of HTTPS. Als je een reverse proxy gebruikt, scherm poort 3210 dan af van internet en sta alleen verkeer van de proxy toe.
 
-Voorbeeld met Nginx Proxy Manager: stel daar een proxy host in met domein `draai.roelblue.nl`, upstream scheme `http`, upstream host het IP-adres van de LXC en upstream port `3210`. Laat Nginx Proxy Manager het publieke HTTPS-certificaat verzorgen. Zet in `/etc/draai.env` `APP_ORIGIN=https://draai.roelblue.nl` (zonder afsluitende slash) en herstart Draai. Zie [de installatiehandleiding](docs/INSTALLATIE.md#toegang-via-een-https-reverse-proxy) voor de stappen.
+Voorbeeld met Nginx Proxy Manager: stel daar een proxy host in met domein `draai.example.com`, upstream scheme `http`, upstream host het IP-adres van de LXC en upstream port `3210`. Laat Nginx Proxy Manager het publieke HTTPS-certificaat verzorgen. Zet in `/etc/draai.env` `APP_ORIGIN=https://draai.example.com` (zonder afsluitende slash) en herstart Draai. Zie [de installatiehandleiding](docs/INSTALLATIE.md#toegang-via-een-https-reverse-proxy) voor de stappen.
 
 Draai vernieuwt alleen de Discogs-collectiebasis iedere vijf uur (bij 422 exemplaren vijf pagina’s). Ontbrekende releasedetails worden rustig aangevuld; bestaande details alleen bij gebruik. Hoezen worden niet op de server gedownload en collectieafbeeldingen laden pas nabij het zichtbare scherm. Bij verouderde gegevens vraagt Draai om synchronisatie voordat releasegegevens opnieuw worden getoond. De app vermeldt Discogs als gegevensbron en is niet verbonden aan of goedgekeurd door Discogs.
 
@@ -73,3 +73,5 @@ Nostalgisch is een eigen stemming. Geef platen sfeer- en seizoenslabels; koppel 
 De geschiedenis bevat statistieken over geregistreerde sessies, unieke exemplaren, sessieduur en het verkende deel van je beschikbare LP’s. Sessieduur is geen gemeten afspeeltijd.
 
 Op iPhone/iPad: open de HTTPS-site in Safari en kies **Deel → Zet op beginscherm**. Er zijn aparte Apple- en manifesticonen. Dit voegt geen offlinewerking toe. Een eerder bewaard icoon kan opnieuw toevoegen vereisen. Iconen opnieuw genereren: `node scripts/generate-icons.mjs`.
+
+Discogs-gebruikersnaam en weerstation-ID hebben geen ingebouwde standaardwaarde. Vul `DISCOGS_USERNAME` en `WU_STATION_ID` uitsluitend in je eigen `.env` (LXC: `/etc/draai.env`) in. De meegeleverde configuratie bevat lege velden; upgrades bewaren bestaande waarden.

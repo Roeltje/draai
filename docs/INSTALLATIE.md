@@ -22,7 +22,7 @@ PORT=3210
 DATA_DIR=./data
 DISCOGS_USERNAME=jouw-discogs-gebruikersnaam
 DISCOGS_TOKEN=plaats-je-persoonlijke-token-hier
-WU_STATION_ID=IWAALW30
+WU_STATION_ID=JOUW_STATION_ID
 WU_API_KEY=
 WIKI_ENABLED=false
 APP_ORIGIN=
@@ -123,9 +123,9 @@ NODE_ENV=production
 HOST=0.0.0.0
 PORT=3210
 DATA_DIR=/var/lib/draai
-DISCOGS_USERNAME=roeltej
+DISCOGS_USERNAME=jouw-discogs-gebruikersnaam
 DISCOGS_TOKEN=
-WU_STATION_ID=IWAALW30
+WU_STATION_ID=JOUW_STATION_ID
 WU_API_KEY=
 WIKI_ENABLED=false
 APP_ORIGIN=http://192.168.1.50:3210
@@ -146,16 +146,16 @@ De LXC-installer stelt `HOST=0.0.0.0` en `PORT=3210` in, zodat een proxy op een 
 
 | Nginx Proxy Manager-veld | Waarde |
 | --- | --- |
-| Domain Names | `draai.roelblue.nl` |
+| Domain Names | `draai.example.com` |
 | Scheme | `http` |
 | Forward Hostname / IP | IP-adres van de Draai-LXC, bijvoorbeeld `192.168.1.50` |
 | Forward Port | `3210` |
-| SSL | Vraag of selecteer een certificaat voor `draai.roelblue.nl` en schakel HTTPS in |
+| SSL | Vraag of selecteer een certificaat voor `draai.example.com` en schakel HTTPS in |
 
 Zet daarna in `/etc/draai.env`:
 
 ```dotenv
-APP_ORIGIN=https://draai.roelblue.nl
+APP_ORIGIN=https://draai.example.com
 ```
 
 Gebruik geen afsluitende slash. Herstart Draai na een configuratiewijziging met `systemctl restart draai`. Beperk netwerktoegang tot poort 3210 tot de proxy en beheer de publieke toegang aan de proxyzijde.

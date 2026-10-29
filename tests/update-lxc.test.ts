@@ -36,7 +36,7 @@ function fixture(fn: (dir: string) => void) {
     writeFileSync(join(dir, "data/live.sqlite"), "old-live");
     writeFileSync(
       join(dir, "config"),
-      "HOST=127.0.0.1\nPORT='4321'\nDATA_DIR=/var/lib/draai\nAPP_ORIGIN=https://draai.roelblue.nl\nDISCOGS_TOKEN=private-fixture\n",
+      "HOST=127.0.0.1\nPORT='4321'\nDATA_DIR=/var/lib/draai\nAPP_ORIGIN=https://draai.example.com\nDISCOGS_TOKEN=private-fixture\n",
     );
     writeFileSync(join(dir, "unit"), "old-unit");
     writeFileSync(join(dir, "stage/new.service"), "new-unit");

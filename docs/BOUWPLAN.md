@@ -4,8 +4,8 @@
 Een aantrekkelijke persoonlijke webapp die Roel helpt vaker zijn eigen platen te luisteren. Binnen enkele seconden een plaat kiezen; daarna iets interessants ontdekken. Telefoon is het primaire apparaat. Een Raspberry Pi 3B/3B+ met een oud 19-inch scherm kan optioneel dezelfde luistersessie tonen.
 
 Bekende koppelingen:
-- Discogs-gebruiker: roeltej; collectie via de officiële API.
-- Bresser-weerstation via Weather Underground, station IWAALW30.
+- Discogs-gebruiker: jouw-discogs-gebruikersnaam; collectie via de officiële API.
+- Bresser-weerstation via Weather Underground, station JOUW_STATION_ID.
 - Hosting: eigen Proxmox-server, applicatie in een LXC.
 - Taal interface: Nederlands.
 - Voor de basiswerking zijn geen AI-API, abonnement, smartplugs of Pi nodig.
@@ -53,7 +53,7 @@ Gebruik in eerste instantie het thuisnetwerk. Leg adres, poort, opstarten en fir
 Verwijder verdwenen collectie-items niet uit historische sessies. Bewaar zowel oorspronkelijke albumdatum als persingsdatum wanneer betrouwbaar beschikbaar; presenteer ze duidelijk apart. SQLite-migraties zijn versiebeheerbaar. Back-up moet een consistente databasekopie plus configuratie omvatten; documenteer herstel en voer één herstelcontrole uit.
 
 ## Discogs-koppeling
-Gebruik een persoonlijk token en een herkenbare User-Agent. Verifieer voor implementatie officiële API-documentatie, authenticatie, gebruiksvoorwaarden, afbeeldingsvoorwaarden en cachingregels. Collection endpoint: /users/roeltej/collection/folders/0/releases, met volledige paginering. Release details via /releases/{id}; master/artistgegevens alleen wanneer nuttig.
+Gebruik een persoonlijk token en een herkenbare User-Agent. Verifieer voor implementatie officiële API-documentatie, authenticatie, gebruiksvoorwaarden, afbeeldingsvoorwaarden en cachingregels. Collection endpoint: /users/jouw-discogs-gebruikersnaam/collection/folders/0/releases, met volledige paginering. Release details via /releases/{id}; master/artistgegevens alleen wanneer nuttig.
 
 Synchroniseer bij eerste configuratie, vervolgens dagelijks en op verzoek. Bewaar basisgegevens zodra een pagina binnen is; verrijk details in de achtergrond. Respecteer rate-limitheaders en tijdelijke blokkades met back-off; geen onbeperkte retries. Laat laatste geslaagde gegevens bruikbaar bij storingen. Verwijderingen pas verwerken na een volledig geslaagde collectiescan. Voorkom dubbele synchronisatiejobs.
 

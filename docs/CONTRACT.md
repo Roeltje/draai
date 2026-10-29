@@ -12,7 +12,7 @@ Shared types in shared/types.ts. JSON API same-origin. All mutations take JSON a
 - GET /api/events -> SSE event `state` with AppState; initial state on connect, heartbeat; frontend refetches on reconnect.
 - GET /api/health -> {ok:true}
 
-Demo mode when DISCOGS_TOKEN absent, separate persistent database from live. Config env: PORT=3210, HOST=127.0.0.1, DATA_DIR=./data, DISCOGS_USERNAME=roeltej, DISCOGS_TOKEN, WU_API_KEY, WU_STATION_ID=IWAALW30, APP_ORIGIN (for LAN/reverse proxy origin allowlisting). No config/token mutation from browser in v1. Expose booleans only. Dev Vite on localhost:5173 proxies API to localhost:3210. Allow that dev origin explicitly in nonproduction only. Production start serves dist/client.
+Demo mode when DISCOGS_TOKEN absent, separate persistent database from live. Config env: PORT=3210, HOST=127.0.0.1, DATA_DIR=./data, DISCOGS_USERNAME=jouw-discogs-gebruikersnaam, DISCOGS_TOKEN, WU_API_KEY, WU_STATION_ID=JOUW_STATION_ID, APP_ORIGIN (for LAN/reverse proxy origin allowlisting). No config/token mutation from browser in v1. Expose booleans only. Dev Vite on localhost:5173 proxies API to localhost:3210. Allow that dev origin explicitly in nonproduction only. Production start serves dist/client.
 
 Demo records are fictional, six original graphic sleeve illustrations at /artwork/{01..06}.svg. Titles/artists: Nachtlicht / Studio Noord; Tussen de regels / Mira & de Rivier; Zachte landing / Het Getij; Buiten bereik / Satelliet; Kleine uren / Oscar Vale Trio; Open water / Alma Sol. All facts/tracks/credits clearly demo. Frontend can use these artwork filenames; backend seed supplies matching coverUrl. First selection may be weighted but no fake current weather or personal history.
 

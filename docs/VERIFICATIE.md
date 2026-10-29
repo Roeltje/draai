@@ -12,7 +12,7 @@
 - Notitie en sessie bewaard na een volledige serverherstart.
 - SQLite-back-up gemaakt terwijl de app draaide; integrity_check was `ok`. Back-up in een aparte map teruggezet en met de echte Service geopend: zes demo-items, één afgeronde sessie en de notitie hersteld.
 - Start Draai.command daadwerkelijk uitgevoerd en server succesvol gestart; shellsyntaxis gecontroleerd.
-- Publieke Discogs-aanvraag naar roeltej (één item) gaf HTTP 200 en totaal 422 items terug. Het ontvangen gegevensmodel komt overeen met de adapter. Geen complete gebruikerscollectie opgenomen in de broncode.
+- Publieke Discogs-aanvraag voor de geconfigureerde gebruiker (één item) gaf HTTP 200 en totaal 422 items terug. Het ontvangen gegevensmodel komt overeen met de adapter. Geen complete gebruikerscollectie opgenomen in de broncode.
 
 - Openbare Wiki-praktijktest met Kind of Blue: exact Discogs-master-ID 5460 gekoppeld aan Wikidata Q283221, Nederlandse Wikipedia-tekst (maximaal 600 tekens) en releasedatum 1959-08-17.
 - Nieuwe browsercontrole: fictief albumverhaal, vaste voorbeeldreleasedatum, datumkeuze uitzetten, expliciet kalenderalbum kiezen en achtergrondverhalen bijwerken.
@@ -42,3 +42,5 @@ De tijdens de browsercontrole gemaakte testgeschiedenis is uit de opgeleverde de
 - Apple/manifestPNG’s gegenereerd met eigen script. Geen echte iPhone/iPad-installatie uitgevoerd.
 
 - Nieuwe statistieken ook visueel bekeken op1280×800; mobiele schermafbeelding opgeslagen. Seizoenlabel Winter opslaan en terugzetten naar automatisch via de interface gecontroleerd. Voorkeuren en sessie bleven na serverherstart behouden.
+
+- Persoonlijke configuratie:19 relevante tests en productiebuild geslaagd. Beide ontbrekende-ID-gevallen via het echte serverstartpunt gecontroleerd: exit vóór database/start, zonder sleutel in foutmelding. Geen persoonlijke username/station-ID/domein meer in bijgehouden huidige bestanden.
