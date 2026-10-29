@@ -4,13 +4,32 @@ import { resolve } from "node:path";
 import { buildApp } from "./app.ts";
 
 if (existsSync(".env")) loadEnvFile(".env");
+
+const token = process.env.DISCOGS_TOKEN?.trim() ?? "";
+const username = process.env.DISCOGS_USERNAME?.trim() ?? "";
+const weatherKey = process.env.WU_API_KEY?.trim() ?? "";
+const stationId = process.env.WU_STATION_ID?.trim() ?? "";
+const missingConfiguration: string[] = [];
+if (token && !username)
+  missingConfiguration.push(
+    "DISCOGS_TOKEN is ingesteld, maar DISCOGS_USERNAME ontbreekt. Vul lokaal je eigen Discogs-gebruikersnaam in.",
+  );
+if (weatherKey && !stationId)
+  missingConfiguration.push(
+    "WU_API_KEY is ingesteld, maar WU_STATION_ID ontbreekt. Vul lokaal je eigen Weather Underground-station-ID in.",
+  );
+if (missingConfiguration.length) {
+  console.error(`Draai kan niet starten:\n${missingConfiguration.join("\n")}`);
+  process.exit(1);
+}
+
 const { app } = await buildApp({
   dataDir: resolve(process.env.DATA_DIR ?? "./data"),
-  token: process.env.DISCOGS_TOKEN,
-  username: process.env.DISCOGS_USERNAME ?? "jouw-discogs-gebruikersnaam",
-  weatherKey: process.env.WU_API_KEY,
-  stationId: process.env.WU_STATION_ID ?? "JOUW_STATION_ID",
-  origin: process.env.APP_ORIGIN,
+  token: token || undefined,
+  username,
+  weatherKey: weatherKey || undefined,
+  stationId,
+  origin: process.env.APP_ORIGIN?.trim() || undefined,
   production: process.env.NODE_ENV === "production",
   wikiEnabled: process.env.WIKI_ENABLED === "true",
 });

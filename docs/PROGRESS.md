@@ -51,3 +51,6 @@ Zie VERIFICATIE.md voor bewijs en grenzen van de uitgevoerde controles.
 - Nostalgie, persoonlijke genre-/weerregels en seizoenslabels; kerstfilter heeft expliciete overrides.
 - SVG-ster, Apple180/manifest192/512iconen, lazy collectiehoezen en geregistreerde luisterstatistieken.
 - Configuratiepad en HTTPS-origin prominent gedocumenteerd. Updater bewaart configuratie en volledige koude back-up. Geen nieuwe externe AI-service of kosten.
+
+## Persoonlijke configuratie
+Discogs-gebruikersnaam en weerstation-ID uitsluitend via eigen omgevingsconfiguratie; geen persoonlijke defaults in code, installatievoorbeeld of documentatie. Voorbeelddomein generiek gemaakt. Bestaande lokale configuratie blijft behouden. Oudere Git-commits zijn niet herschreven.

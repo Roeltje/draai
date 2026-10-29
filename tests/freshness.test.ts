@@ -41,7 +41,7 @@ function fixture(): AppState {
     },
     weather: {
       status: "unconfigured",
-      stationId: "JOUW_STATION_ID",
+      stationId: "TEST_STATION",
       observedAt: null,
       temperature: null,
       rainRate: null,

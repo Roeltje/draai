@@ -194,9 +194,11 @@ NODE_ENV=production
 HOST=0.0.0.0
 PORT=3210
 DATA_DIR=/var/lib/draai
-DISCOGS_USERNAME=jouw-discogs-gebruikersnaam
+# Vul lokaal je eigen Discogs-gebruikersnaam in.
+DISCOGS_USERNAME=
 DISCOGS_TOKEN=
-WU_STATION_ID=JOUW_STATION_ID
+# Vul lokaal je eigen Weather Underground-station-ID in.
+WU_STATION_ID=
 WU_API_KEY=
 WIKI_ENABLED=false
 APP_ORIGIN=$DRAAI_ORIGIN

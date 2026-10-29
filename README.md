@@ -73,3 +73,5 @@ Nostalgisch is een eigen stemming. Geef platen sfeer- en seizoenslabels; koppel 
 De geschiedenis bevat statistieken over geregistreerde sessies, unieke exemplaren, sessieduur en het verkende deel van je beschikbare LP’s. Sessieduur is geen gemeten afspeeltijd.
 
 Op iPhone/iPad: open de HTTPS-site in Safari en kies **Deel → Zet op beginscherm**. Er zijn aparte Apple- en manifesticonen. Dit voegt geen offlinewerking toe. Een eerder bewaard icoon kan opnieuw toevoegen vereisen. Iconen opnieuw genereren: `node scripts/generate-icons.mjs`.
+
+Discogs-gebruikersnaam en weerstation-ID hebben geen ingebouwde standaardwaarde. Vul `DISCOGS_USERNAME` en `WU_STATION_ID` uitsluitend in je eigen `.env` (LXC: `/etc/draai.env`) in. De meegeleverde configuratie bevat lege velden; upgrades bewaren bestaande waarden.
