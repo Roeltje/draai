@@ -71,3 +71,9 @@ MIT-licentie, portable ontwikkelinstructies, SECURITY.md, korte LXC-updatehandle
 - Eenmalige upgrade vult ontbrekende stijlregels, bewaart eigen genre-/weerregels en expliciet lege stijllijsten. Bewerken en terugzetten naar standaard werkt via concept en opslaan.
 - 78 tests, typecontrole en productiebuild geslaagd. Mobiele en brede browsercontrole, voorkeur opslaan/herladen en kiezen/starten/afronden/geschiedenis gecontroleerd met een aparte tijdelijke demodatabase.
 - M02-dekking/topstyles-inventaris en badges standaard/eigen blijven vervolgwerk. Pushreminders en begrensde geschatte speeltijd staan op de backlog, niet gebouwd.
+
+
+## Publieke introductie en LXC-praktijkcheck
+- Gebruiker bevestigt geslaagde update op de eigen Ubuntu 26.04-LXC; app is nog bereikbaar. Dit is een gebruikersbevestiging, geen eigen controle van die server.
+- Repository via GitHub als openbaar bevestigd. README voor nieuwe gebruikers herschreven, met mobiele en brede screenshots van fictieve demogegevens. Geen persoonlijke collectie of configuratie afgebeeld.
+- Alleen documentatie en screenshots gewijzigd; geen nieuwe runtimefuncties in deze ronde.

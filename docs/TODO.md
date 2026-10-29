@@ -17,11 +17,11 @@ Bijgewerkt: 29 oktober 2026. Dit is een keuzelijst, geen opdracht om alles te bo
 | ID | Prio | Taak | Werk / tokens | Klaar als |
 |---|---|---|---|---|
 | G01 | P0 | Publieke repo voorbereiden: portable paden, MIT, documentatie | S / laag | LICENSE en pakketlicentie aanwezig, geen machinegebonden paden, publieke clone plus optionele private toegang beschreven; naar GitHub gepubliceerd. Afgerond: MIT, portable docs en korte updatehandleiding gepubliceerd. |
-| G02 | P0 | GitHub security-instellingen afronden | S–M / middel | Dependency graph, alerts, security-updates en malwarealerts aangezet; main-regel opgeslagen. Secret scanning/push protection na publicatie controleren; main-regel wordt op huidig private plan niet afgedwongen. Eventuele beperking noteren. Geen betaald abonnement inschakelen. Repo nog niet publiek maken zonder expliciete opdracht. |
-| G03 | P0 | Losse korte LXC-updatehandleiding en eerste praktijkcheck | S / laag | Clone vernieuwen, updater uitvoeren, config/data behouden; werkelijk resultaat op Ubuntu26.04 apart bevestigen. Updater bestaat al, gesimuleerde foutpaden getest. |
+| G02 | P0 | GitHub security-instellingen afronden | S–M / middel | Dependency graph, alerts, security-updates en malwarealerts aangezet; main-regel opgeslagen. Secret scanning/push protection na publicatie controleren; De main-regel werd vóór openbaar maken niet afgedwongen; de huidige werking moet nog worden bevestigd. Eventuele beperking noteren. Geen betaald abonnement inschakelen. Gebruiker heeft de repo inmiddels openbaar gemaakt; resterende controles na openbaar maken staan nog open. |
+| G03 | Klaar | Losse korte LXC-updatehandleiding en eerste praktijkcheck | S / laag | Clone vernieuwen, updater uitvoeren, config/data behouden; werkelijk resultaat op Ubuntu26.04 apart bevestigen. Updater bestaat al, gesimuleerde foutpaden getest. Gebruiker bevestigt geslaagde update op eigen Ubuntu 26.04-LXC; app bleef bereikbaar. |
 | H01 | Klaar | Afwisselende homepagehoezen | S / laag | Twee verschillende beschikbare, verse hoezen uit eigen collectie; bijvoorbeeld dagelijks wisselen in Amsterdamse tijd en stabiel tijdens paginagebruik. Geen nieuwe volledige API-import nodig; 0, 1 en 2 platen en verlopen data werken. |
 
-Homepagebevinding: `src/main.tsx` gebruikt momenteel `records[0]` en `records[2]`. Geen rotatie; dezelfde sortering geeft dezelfde hoezen. Begin met dagrotatie, niet met een voortdurend bewegende carrousel. Een optionele knop voor nieuwe hoezen kan later.
+Homepage: dagelijkse rotatie is gebouwd en getest. Een optionele knop voor nieuwe hoezen kan later.
 
 ## Sfeer, keuze en weer
 
