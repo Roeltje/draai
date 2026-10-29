@@ -52,3 +52,5 @@ De tijdens de browsercontrole gemaakte testgeschiedenis is uit de opgeleverde de
 - Stijlvoorkeuren: initieel vullen, oude voorkeuren migreren, herstartbehoud, expliciet lege regels/lijsten, oudere clients, invoervalidatie, stijl/genre/handmatige prioriteit en begrensde weging getest.
 - Productiebuild visueel gecontroleerd op 390×844 en 1280×800. Ambient→Knus toegevoegd, opgeslagen en na herladen bevestigd. Knus gekozen, suggestie bevestigd, notitie ingevuld, sessie afgerond en geschiedenis/statistieken zichtbaar gecontroleerd. Tijdelijke demodata buiten de repository gebruikt.
 - Geen echte Discogs-/WU-accountoproepen of LXC-update uitgevoerd in deze ronde. GitHub-regel wel opgeslagen maar niet afgedwongen zolang dit private repositoryplan dat niet ondersteunt; secret scanning/push protection na openbaar maken opnieuw controleren.
+
+- Gebruikersbevestiging na publicatie: eigen Ubuntu 26.04-LXC bijgewerkt en app nog bereikbaar. De specifieke server is niet door de ontwikkelagent geïnspecteerd.
