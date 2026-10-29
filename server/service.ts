@@ -84,6 +84,18 @@ export class Service {
     this.mode = config.token ? "live" : "demo";
     mkdirSync(config.dataDir, { recursive: true });
     this.store = new Store(join(config.dataDir, `${this.mode}.sqlite`));
+    // Seed once; only add styles when upgrading saved preferences from older versions.
+    const savedPreferences = this.store.get<SelectionPreferences | null>(
+      "preferences",
+      null,
+    );
+    if (!savedPreferences)
+      this.store.set("preferences", structuredClone(DEFAULT_PREFERENCES));
+    else if (savedPreferences.styleMoods === undefined)
+      this.store.set("preferences", {
+        ...savedPreferences,
+        styleMoods: structuredClone(DEFAULT_PREFERENCES.styleMoods),
+      });
     if (this.mode === "demo" && !this.store.records().length)
       demoRecords(this.iso()).forEach((r) => this.store.put(r, this.iso()));
     if (this.mode === "demo" && this.store.get("demoKnowledgeVersion", 0) < 1) {
@@ -239,7 +251,7 @@ export class Service {
     recordId?: string,
     useAnniversaries = true,
     useSeasons = true,
-    useGenreMoods = false,
+    useGenreMoods = true,
   ) {
     if (this.state().activeSession)
       throw new AppError(409, "Rond eerst de actieve luistersessie af.");
@@ -531,7 +543,10 @@ export class Service {
     return this.store.get("preferences", structuredClone(DEFAULT_PREFERENCES));
   }
   setPreferences(preferences: SelectionPreferences) {
-    this.store.set("preferences", preferences);
+    this.store.set("preferences", {
+      ...preferences,
+      styleMoods: preferences.styleMoods ?? this.preferences().styleMoods,
+    });
     this.emit();
   }
   private wikiKey(record: RecordItem) {

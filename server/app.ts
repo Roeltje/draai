@@ -24,7 +24,7 @@ function validatePreferences(
   const weather = value.weatherMoods as Record<string, unknown> | undefined;
   if (
     Object.keys(value).some(
-      (k) => !["genreMoods", "weatherMoods"].includes(k),
+      (k) => !["genreMoods", "styleMoods", "weatherMoods"].includes(k),
     ) ||
     !Array.isArray(value.genreMoods) ||
     value.genreMoods.length > 100 ||
@@ -37,18 +37,40 @@ function validatePreferences(
         Object.keys(g).every((k) => ["genre", "moods"].includes(k)) &&
         validMoods(g.moods),
     ) ||
+    (value.styleMoods !== undefined &&
+      (!Array.isArray(value.styleMoods) ||
+        value.styleMoods.length > 200 ||
+        !value.styleMoods.every(
+          (rule: any) =>
+            rule &&
+            typeof rule.style === "string" &&
+            rule.style.trim().length > 0 &&
+            rule.style.length <= 100 &&
+            Object.keys(rule).every((key) =>
+              ["style", "moods"].includes(key),
+            ) &&
+            validMoods(rule.moods),
+        ))) ||
     !weather ||
     typeof weather !== "object" ||
     Array.isArray(weather) ||
     Object.keys(weather).some((k) => !["rain", "cold", "warm"].includes(k)) ||
     !["rain", "cold", "warm"].every((k) => validMoods(weather[k]))
   )
-    throw new AppError(400, "Ongeldige genre- of weervoorkeuren.");
+    throw new AppError(400, "Ongeldige stijl-, genre- of weervoorkeuren.");
   const normalized = {
     genreMoods: value.genreMoods.map((g: any) => ({
       genre: g.genre.trim(),
       moods: g.moods,
     })),
+    ...(Array.isArray(value.styleMoods)
+      ? {
+          styleMoods: value.styleMoods.map((rule: any) => ({
+            style: rule.style.trim(),
+            moods: rule.moods,
+          })),
+        }
+      : {}),
     weatherMoods: weather,
   } as SelectionPreferences;
   if (
@@ -56,6 +78,12 @@ function validatePreferences(
       .size !== normalized.genreMoods.length
   )
     throw new AppError(400, "Gebruik elk genre maar één keer.");
+  if (
+    normalized.styleMoods &&
+    new Set(normalized.styleMoods.map((rule) => rule.style.toLocaleLowerCase()))
+      .size !== normalized.styleMoods.length
+  )
+    throw new AppError(400, "Gebruik elke stijl maar één keer.");
   return normalized;
 }
 const objectBody = (body: unknown): Record<string, unknown> => {
@@ -77,7 +105,7 @@ export async function buildApp(
     heartbeatMs?: number;
   } = {},
 ) {
-  const app = Fastify({ logger: false, bodyLimit: 16384 });
+  const app = Fastify({ logger: false, bodyLimit: 65536 });
   const service = new Service(config, dependencies);
   app.decorate("service", service);
   app.addHook("onRequest", async (request) => {

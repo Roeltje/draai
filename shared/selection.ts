@@ -5,6 +5,8 @@ import type {
   SelectionPreferences,
   WeatherState,
 } from "./types.ts";
+import { DEFAULT_GENRE_MOODS, DEFAULT_STYLE_MOODS } from "./moodDefaults.ts";
+export { DEFAULT_GENRE_MOODS, DEFAULT_STYLE_MOODS } from "./moodDefaults.ts";
 export const MOODS: Mood[] = [
   "alles",
   "rust",
@@ -21,7 +23,8 @@ export const SEASONS: Season[] = [
   "kerst",
 ];
 export const DEFAULT_PREFERENCES: SelectionPreferences = {
-  genreMoods: [],
+  genreMoods: DEFAULT_GENRE_MOODS,
+  styleMoods: DEFAULT_STYLE_MOODS,
   weatherMoods: { rain: [], cold: [], warm: [] },
 };
 export function seasonToday(now: number): {
@@ -83,23 +86,34 @@ export function selectionFactors(
       `${seasons.inferred ? "Kerstregel op basis van titel/stijl" : "Jouw seizoenslabel"}: ${matches ? "past bij deze periode" : "buiten het seizoen, daarom minder gewicht"}.`,
     );
   }
-  const genreTags = options.useGenreMoods
-    ? prefs.genreMoods
-        .filter((g) =>
-          record.genres.some(
-            (r) => r.toLocaleLowerCase() === g.genre.toLocaleLowerCase(),
-          ),
-        )
-        .flatMap((g) => g.moods)
+  const matches = (names: string[], name: string) =>
+    names.some(
+      (candidate) =>
+        candidate.trim().toLocaleLowerCase() ===
+        name.trim().toLocaleLowerCase(),
+    );
+  const styleRules = options.useGenreMoods
+    ? (prefs.styleMoods ?? []).filter((rule) =>
+        matches(record.styles, rule.style),
+      )
     : [];
-  // Explicit personal tags take precedence over genre-derived mood suggestions.
-  const effective = record.tags.length ? record.tags : genreTags;
+  const genreRules =
+    options.useGenreMoods && !styleRules.length
+      ? prefs.genreMoods.filter((rule) => matches(record.genres, rule.genre))
+      : [];
+  // A matching empty style override intentionally prevents genre fallback.
+  const effective = record.tags.length
+    ? record.tags
+    : (styleRules.length ? styleRules : genreRules).flatMap(
+        (rule) => rule.moods,
+      );
   if (mood !== "alles" && effective.includes(mood)) {
     weight *= record.tags.length ? 2 : 1.4;
+    const label = mood === "warm" ? "knus" : mood;
     reasons.push(
       record.tags.length
-        ? `Jouw sfeerlabel ‘${mood}’ geeft extra gewicht.`
-        : `Jouw genre-stemmingskoppeling ‘${mood}’ geeft extra gewicht.`,
+        ? `Jouw sfeerlabel ‘${label}’ geeft extra gewicht.`
+        : `Jouw ${styleRules.length ? "stijl" : "genre"}-stemmingskoppeling ‘${label}’ geeft extra gewicht.`,
     );
   }
   if (

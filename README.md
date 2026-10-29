@@ -68,7 +68,7 @@ Zie [docs/VERIFICATIE.md](docs/VERIFICATIE.md) voor uitgevoerde controles en [do
 
 
 ## Persoonlijker kiezen
-Nostalgisch is een eigen stemming. Geef platen sfeer- en seizoenslabels; koppel in Instellingen genres en verse weerdata aan jouw stemming. Kerstplaten worden voorzichtig op titel/stijl herkend en bij willekeurig kiezen buiten 15 november–6 januari overgeslagen. Met **Hele jaar** kun je dat per plaat overrulen. Andere seizoenslabels geven een bescheiden voorkeur, geen harde blokkade.
+Nostalgisch is een eigen stemming. Geef platen sfeer- en seizoenslabels; pas in Instellingen de 91 voorgevulde stijlverbanden en 13 genreverbanden aan. Je eigen plaatlabels gaan vóór stijlen, stijlen vóór genres. Deze verbanden staan standaard aan; bestaande eigen voorkeuren blijven bij een upgrade behouden. Weerverbanden stel je zelf in. De stemming Warm heet nu Knus; bestaande labels blijven werken. Kerstplaten worden voorzichtig op titel/stijl herkend en bij willekeurig kiezen buiten 15 november–6 januari overgeslagen. Met **Hele jaar** kun je dat per plaat overrulen. Andere seizoenslabels geven een bescheiden voorkeur, geen harde blokkade.
 
 De geschiedenis bevat statistieken over geregistreerde sessies, unieke exemplaren, sessieduur en het verkende deel van je beschikbare LP’s. Sessieduur is geen gemeten afspeeltijd.
 
@@ -77,3 +77,5 @@ Op iPhone/iPad: open de HTTPS-site in Safari en kies **Deel → Zet op beginsche
 Discogs-gebruikersnaam en weerstation-ID hebben geen ingebouwde standaardwaarde. Vul `DISCOGS_USERNAME` en `WU_STATION_ID` uitsluitend in je eigen `.env` (LXC: `/etc/draai.env`) in. De meegeleverde configuratie bevat lege velden; upgrades bewaren bestaande waarden.
 
 Kort bijwerken vanuit de LXC: [UPDATEN.md](docs/UPDATEN.md). Zie ook [veilig gebruik](SECURITY.md). De MIT-licentie geldt voor deze broncode; externe gegevens houden hun eigen voorwaarden.
+
+De homepage toont dagelijks een andere greep uit de beschikbare LP-hoezen (Amsterdamse datum), zonder extra collectie-import. In Instellingen kun je de standaard stijl- en genreverbanden opnieuw als concept klaarzetten en daarna bewaren; weerregels blijven daarbij behouden.
