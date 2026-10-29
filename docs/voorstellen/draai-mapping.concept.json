@@ -1,0 +1,846 @@
+{
+  "_info": {
+    "doel": "Basis-mapping voor draai: weer -> stemming, Discogs genre/style -> stemming, seizoensmomenten.",
+    "gewichten": "0.0 - 1.0. Zachte gewichten, geen harde filters. Score plaat = som(weerconditie.gewicht * plaat.stemming.gewicht) + gekozen stemming + randomfactor - 'recent gedraaid'-straf.",
+    "fallback": "Style heeft voorrang op genre. Heeft een plaat geen gemapte style, dan valt hij terug op het genre.",
+    "let_op": "Style-namen zijn gespeld zoals Discogs ze gebruikt. Check je eigen collectie: tel alle styles en map in elk geval de top 30-50."
+  },
+  "stemmingen": {
+    "rustig": {
+      "nieuw": false,
+      "omschrijving": "Laag tempo, weinig prikkels"
+    },
+    "warm": {
+      "nieuw": false,
+      "omschrijving": "Knus, soulvol, akoestisch. Overweeg te hernoemen naar 'knus' zodat het niet botst met warm weer"
+    },
+    "energiek": {
+      "nieuw": false,
+      "omschrijving": "Tempo, drive, opstaan en bewegen"
+    },
+    "avontuurlijk": {
+      "nieuw": false,
+      "omschrijving": "Iets wat je zelden draait, experimenteel, onbekend terrein"
+    },
+    "nostalgisch": {
+      "nieuw": false,
+      "omschrijving": "Oude liefdes, jeugd, klassiekers"
+    },
+    "melancholisch": {
+      "nieuw": true,
+      "omschrijving": "Weemoedig, mooi-droevig. Grijze zondag, motregen"
+    },
+    "feestelijk": {
+      "nieuw": true,
+      "omschrijving": "Mensen over de vloer, meezingen, dansen"
+    },
+    "focus": {
+      "nieuw": true,
+      "omschrijving": "Achtergrond bij werken/lezen, weinig vocalen"
+    },
+    "dromerig": {
+      "nieuw": true,
+      "omschrijving": "Zweverig, sfeervol, laat op de avond, mist"
+    }
+  },
+  "drempels": {
+    "_uitleg": "Instelbaar via sliders. Vergelijk bij voorkeur gevoelstemperatuur (windchill / heatIndex uit de PWS-data), niet de kale temperatuur.",
+    "koud_c": 5,
+    "warm_c": 22,
+    "heet_c": 28,
+    "relatief_t_o_v_maandnormaal": {
+      "aan": true,
+      "koud_afwijking_c": -5,
+      "warm_afwijking_c": 5,
+      "_uitleg": "15 graden voelt in maart warm en in juli koud. Conditie 'koud'/'warm' geldt als absolute OF relatieve drempel geraakt wordt."
+    },
+    "hysterese_c": 1.5,
+    "harde_wind_kmh": 39,
+    "storm_windstoot_kmh": 60,
+    "regen_mm_per_uur": {
+      "motregen_tot": 1.0,
+      "regen_tot": 4.0
+    },
+    "mist_dauwpunt_verschil_c": 1.5,
+    "drukdaling_hpa_per_3u": 3
+  },
+  "weercondities": {
+    "zonnig": {
+      "detectie": "overdag, solarRadiation > 60% van verwachte heldere-hemelstraling, precipRate = 0",
+      "stemmingen": {
+        "energiek": 0.8,
+        "feestelijk": 0.5,
+        "avontuurlijk": 0.5,
+        "warm": 0.3
+      }
+    },
+    "grijs": {
+      "detectie": "overdag, solarRadiation < 30% van verwachte heldere-hemelstraling, geen neerslag",
+      "stemmingen": {
+        "rustig": 0.6,
+        "melancholisch": 0.5,
+        "warm": 0.5,
+        "focus": 0.4,
+        "nostalgisch": 0.4
+      }
+    },
+    "motregen": {
+      "detectie": "0 < precipRate < 1 mm/u",
+      "stemmingen": {
+        "melancholisch": 0.7,
+        "rustig": 0.6,
+        "dromerig": 0.5,
+        "nostalgisch": 0.4
+      }
+    },
+    "regen": {
+      "detectie": "1 - 4 mm/u",
+      "stemmingen": {
+        "warm": 0.7,
+        "rustig": 0.6,
+        "melancholisch": 0.6,
+        "nostalgisch": 0.5,
+        "focus": 0.4
+      }
+    },
+    "plensbui": {
+      "detectie": "> 4 mm/u",
+      "stemmingen": {
+        "avontuurlijk": 0.6,
+        "energiek": 0.4,
+        "melancholisch": 0.4
+      }
+    },
+    "harde_wind": {
+      "detectie": "windSpeed > harde_wind_kmh of windGust > storm_windstoot_kmh",
+      "stemmingen": {
+        "avontuurlijk": 0.7,
+        "energiek": 0.5
+      }
+    },
+    "mist": {
+      "detectie": "temp - dewpt < mist_dauwpunt_verschil_c, wind < 5 km/u, humidity > 95%",
+      "stemmingen": {
+        "dromerig": 0.9,
+        "rustig": 0.6,
+        "melancholisch": 0.4
+      }
+    },
+    "vorst": {
+      "detectie": "temp < 0",
+      "stemmingen": {
+        "warm": 0.6,
+        "rustig": 0.5,
+        "nostalgisch": 0.5
+      }
+    },
+    "sneeuw": {
+      "detectie": "temp <= 1 en precipRate > 0 (benadering, PWS meet geen sneeuw)",
+      "stemmingen": {
+        "rustig": 0.8,
+        "dromerig": 0.6,
+        "nostalgisch": 0.5
+      }
+    },
+    "koud": {
+      "detectie": "gevoelstemperatuur < koud_c (of relatief)",
+      "stemmingen": {
+        "warm": 0.8,
+        "nostalgisch": 0.5,
+        "rustig": 0.4
+      }
+    },
+    "warm": {
+      "detectie": "gevoelstemperatuur > warm_c (of relatief)",
+      "stemmingen": {
+        "energiek": 0.6,
+        "feestelijk": 0.6,
+        "avontuurlijk": 0.5
+      }
+    },
+    "heet": {
+      "detectie": "heatIndex > heet_c of dauwpunt > 18 (benauwd)",
+      "stemmingen": {
+        "rustig": 0.6,
+        "dromerig": 0.6,
+        "warm": 0.3
+      }
+    },
+    "donker": {
+      "detectie": "zon onder de horizon (berekend uit lat/lon van je station)",
+      "stemmingen": {
+        "rustig": 0.5,
+        "dromerig": 0.5,
+        "warm": 0.4,
+        "melancholisch": 0.3
+      }
+    },
+    "weer_slaat_om": {
+      "detectie": "luchtdruk daalt > drukdaling_hpa_per_3u",
+      "stemmingen": {
+        "avontuurlijk": 0.4,
+        "melancholisch": 0.3
+      }
+    }
+  },
+  "genres": {
+    "Blues": {
+      "warm": 0.7,
+      "melancholisch": 0.7,
+      "nostalgisch": 0.5
+    },
+    "Brass & Military": {
+      "feestelijk": 0.5,
+      "nostalgisch": 0.4
+    },
+    "Children's": {
+      "nostalgisch": 0.6,
+      "feestelijk": 0.3,
+      "_standaard_uitsluiten": true
+    },
+    "Classical": {
+      "rustig": 0.7,
+      "focus": 0.7,
+      "dromerig": 0.5,
+      "melancholisch": 0.4
+    },
+    "Electronic": {
+      "energiek": 0.6,
+      "avontuurlijk": 0.5,
+      "focus": 0.5,
+      "dromerig": 0.4
+    },
+    "Folk, World, & Country": {
+      "rustig": 0.6,
+      "warm": 0.6,
+      "nostalgisch": 0.5,
+      "avontuurlijk": 0.3
+    },
+    "Funk / Soul": {
+      "warm": 0.8,
+      "energiek": 0.7,
+      "feestelijk": 0.7
+    },
+    "Hip Hop": {
+      "energiek": 0.7,
+      "feestelijk": 0.5,
+      "nostalgisch": 0.3
+    },
+    "Jazz": {
+      "rustig": 0.6,
+      "warm": 0.6,
+      "focus": 0.6,
+      "avontuurlijk": 0.5
+    },
+    "Latin": {
+      "feestelijk": 0.8,
+      "energiek": 0.6,
+      "warm": 0.5
+    },
+    "Non-Music": {
+      "avontuurlijk": 0.3,
+      "_standaard_uitsluiten": true
+    },
+    "Pop": {
+      "feestelijk": 0.6,
+      "energiek": 0.5,
+      "nostalgisch": 0.5
+    },
+    "Reggae": {
+      "warm": 0.6,
+      "rustig": 0.5,
+      "feestelijk": 0.5
+    },
+    "Rock": {
+      "energiek": 0.7,
+      "nostalgisch": 0.5,
+      "avontuurlijk": 0.4
+    },
+    "Stage & Screen": {
+      "nostalgisch": 0.6,
+      "dromerig": 0.5,
+      "avontuurlijk": 0.4
+    }
+  },
+  "styles": {
+    "Ambient": {
+      "dromerig": 0.9,
+      "rustig": 0.8,
+      "focus": 0.7
+    },
+    "Downtempo": {
+      "rustig": 0.7,
+      "dromerig": 0.7,
+      "focus": 0.5
+    },
+    "Trip Hop": {
+      "dromerig": 0.7,
+      "melancholisch": 0.6,
+      "rustig": 0.5
+    },
+    "IDM": {
+      "avontuurlijk": 0.7,
+      "focus": 0.6,
+      "dromerig": 0.4
+    },
+    "Experimental": {
+      "avontuurlijk": 0.9
+    },
+    "Krautrock": {
+      "avontuurlijk": 0.8,
+      "focus": 0.5,
+      "energiek": 0.4
+    },
+    "Minimal": {
+      "focus": 0.8,
+      "rustig": 0.5
+    },
+    "House": {
+      "energiek": 0.8,
+      "feestelijk": 0.8
+    },
+    "Deep House": {
+      "energiek": 0.5,
+      "dromerig": 0.5,
+      "focus": 0.5
+    },
+    "Techno": {
+      "energiek": 0.8,
+      "focus": 0.5,
+      "avontuurlijk": 0.4
+    },
+    "Drum n Bass": {
+      "energiek": 0.9,
+      "avontuurlijk": 0.4
+    },
+    "Electro": {
+      "energiek": 0.7,
+      "feestelijk": 0.5
+    },
+    "Synth-pop": {
+      "nostalgisch": 0.7,
+      "energiek": 0.5,
+      "feestelijk": 0.5
+    },
+    "New Wave": {
+      "nostalgisch": 0.7,
+      "energiek": 0.5,
+      "melancholisch": 0.4
+    },
+    "Italo-Disco": {
+      "feestelijk": 0.9,
+      "nostalgisch": 0.6,
+      "energiek": 0.6
+    },
+    "Disco": {
+      "feestelijk": 0.9,
+      "energiek": 0.8,
+      "warm": 0.4
+    },
+    "Hi NRG": {
+      "feestelijk": 0.8,
+      "energiek": 0.8
+    },
+    "Cool Jazz": {
+      "rustig": 0.8,
+      "focus": 0.7,
+      "warm": 0.5,
+      "dromerig": 0.4
+    },
+    "Modal": {
+      "focus": 0.7,
+      "dromerig": 0.6,
+      "avontuurlijk": 0.5
+    },
+    "Hard Bop": {
+      "energiek": 0.6,
+      "warm": 0.6,
+      "focus": 0.4
+    },
+    "Bop": {
+      "energiek": 0.6,
+      "avontuurlijk": 0.4
+    },
+    "Soul-Jazz": {
+      "warm": 0.8,
+      "energiek": 0.5
+    },
+    "Free Jazz": {
+      "avontuurlijk": 0.9
+    },
+    "Fusion": {
+      "energiek": 0.6,
+      "avontuurlijk": 0.6
+    },
+    "Jazz-Funk": {
+      "energiek": 0.7,
+      "feestelijk": 0.6,
+      "warm": 0.5
+    },
+    "Acid Jazz": {
+      "energiek": 0.6,
+      "feestelijk": 0.5,
+      "nostalgisch": 0.4
+    },
+    "Smooth Jazz": {
+      "rustig": 0.7,
+      "focus": 0.5
+    },
+    "Swing": {
+      "feestelijk": 0.7,
+      "nostalgisch": 0.7,
+      "energiek": 0.5
+    },
+    "Big Band": {
+      "feestelijk": 0.7,
+      "nostalgisch": 0.7
+    },
+    "Lounge": {
+      "rustig": 0.7,
+      "warm": 0.5,
+      "dromerig": 0.4
+    },
+    "Exotica": {
+      "dromerig": 0.6,
+      "avontuurlijk": 0.5,
+      "nostalgisch": 0.4
+    },
+    "Easy Listening": {
+      "rustig": 0.7,
+      "nostalgisch": 0.6
+    },
+    "Bossa Nova": {
+      "rustig": 0.7,
+      "warm": 0.7,
+      "dromerig": 0.5
+    },
+    "Samba": {
+      "feestelijk": 0.8,
+      "energiek": 0.7
+    },
+    "Salsa": {
+      "feestelijk": 0.9,
+      "energiek": 0.8
+    },
+    "Cumbia": {
+      "feestelijk": 0.8,
+      "energiek": 0.6
+    },
+    "Afrobeat": {
+      "energiek": 0.8,
+      "feestelijk": 0.7,
+      "avontuurlijk": 0.5
+    },
+    "Highlife": {
+      "feestelijk": 0.7,
+      "warm": 0.6
+    },
+    "Soul": {
+      "warm": 0.9,
+      "melancholisch": 0.4,
+      "nostalgisch": 0.4
+    },
+    "Funk": {
+      "energiek": 0.9,
+      "feestelijk": 0.8
+    },
+    "Rhythm & Blues": {
+      "warm": 0.7,
+      "nostalgisch": 0.6,
+      "energiek": 0.5
+    },
+    "Gospel": {
+      "warm": 0.7,
+      "feestelijk": 0.5
+    },
+    "Neo Soul": {
+      "warm": 0.8,
+      "rustig": 0.5,
+      "dromerig": 0.4
+    },
+    "Northern Soul": {
+      "energiek": 0.8,
+      "feestelijk": 0.7,
+      "nostalgisch": 0.6
+    },
+    "Psychedelic Rock": {
+      "avontuurlijk": 0.7,
+      "dromerig": 0.6,
+      "nostalgisch": 0.4
+    },
+    "Prog Rock": {
+      "avontuurlijk": 0.8,
+      "focus": 0.4
+    },
+    "Space Rock": {
+      "dromerig": 0.7,
+      "avontuurlijk": 0.6
+    },
+    "Post Rock": {
+      "dromerig": 0.7,
+      "melancholisch": 0.6,
+      "focus": 0.6
+    },
+    "Shoegaze": {
+      "dromerig": 0.9,
+      "melancholisch": 0.5
+    },
+    "Dream Pop": {
+      "dromerig": 0.9,
+      "rustig": 0.5,
+      "melancholisch": 0.5
+    },
+    "Hard Rock": {
+      "energiek": 0.9,
+      "nostalgisch": 0.4
+    },
+    "Heavy Metal": {
+      "energiek": 0.9
+    },
+    "Doom Metal": {
+      "melancholisch": 0.6,
+      "avontuurlijk": 0.5
+    },
+    "Punk": {
+      "energiek": 1.0
+    },
+    "Hardcore": {
+      "energiek": 1.0
+    },
+    "Post-Punk": {
+      "melancholisch": 0.6,
+      "energiek": 0.6
+    },
+    "Goth Rock": {
+      "melancholisch": 0.8,
+      "dromerig": 0.4
+    },
+    "Grunge": {
+      "energiek": 0.7,
+      "melancholisch": 0.5,
+      "nostalgisch": 0.5
+    },
+    "Indie Rock": {
+      "energiek": 0.6,
+      "melancholisch": 0.4
+    },
+    "Indie Pop": {
+      "energiek": 0.5,
+      "rustig": 0.3
+    },
+    "Alternative Rock": {
+      "energiek": 0.7,
+      "nostalgisch": 0.4
+    },
+    "Garage Rock": {
+      "energiek": 0.9,
+      "feestelijk": 0.5
+    },
+    "Classic Rock": {
+      "nostalgisch": 0.8,
+      "energiek": 0.6
+    },
+    "Blues Rock": {
+      "energiek": 0.7,
+      "warm": 0.5
+    },
+    "Rock & Roll": {
+      "feestelijk": 0.8,
+      "nostalgisch": 0.8,
+      "energiek": 0.7
+    },
+    "Rockabilly": {
+      "feestelijk": 0.8,
+      "energiek": 0.8,
+      "nostalgisch": 0.6
+    },
+    "Soft Rock": {
+      "rustig": 0.6,
+      "nostalgisch": 0.7
+    },
+    "AOR": {
+      "nostalgisch": 0.8,
+      "energiek": 0.4
+    },
+    "Pop Rock": {
+      "feestelijk": 0.5,
+      "nostalgisch": 0.5,
+      "energiek": 0.5
+    },
+    "Power Pop": {
+      "energiek": 0.7,
+      "feestelijk": 0.6
+    },
+    "Folk Rock": {
+      "warm": 0.6,
+      "nostalgisch": 0.6,
+      "rustig": 0.4
+    },
+    "Country Rock": {
+      "warm": 0.6,
+      "nostalgisch": 0.5
+    },
+    "Lo-Fi": {
+      "melancholisch": 0.5,
+      "rustig": 0.5,
+      "dromerig": 0.4
+    },
+    "Folk": {
+      "rustig": 0.7,
+      "warm": 0.7,
+      "melancholisch": 0.5
+    },
+    "Country": {
+      "warm": 0.6,
+      "nostalgisch": 0.6,
+      "melancholisch": 0.4
+    },
+    "Bluegrass": {
+      "feestelijk": 0.6,
+      "energiek": 0.5,
+      "warm": 0.5
+    },
+    "Celtic": {
+      "warm": 0.6,
+      "melancholisch": 0.5,
+      "feestelijk": 0.4
+    },
+    "Chanson": {
+      "melancholisch": 0.7,
+      "nostalgisch": 0.6,
+      "warm": 0.5
+    },
+    "Ballad": {
+      "melancholisch": 0.7,
+      "rustig": 0.6
+    },
+    "Vocal": {
+      "nostalgisch": 0.6,
+      "warm": 0.5
+    },
+    "Roots Reggae": {
+      "warm": 0.7,
+      "rustig": 0.5
+    },
+    "Dub": {
+      "dromerig": 0.8,
+      "rustig": 0.6,
+      "focus": 0.4
+    },
+    "Ska": {
+      "feestelijk": 0.9,
+      "energiek": 0.8
+    },
+    "Rocksteady": {
+      "warm": 0.7,
+      "feestelijk": 0.5,
+      "nostalgisch": 0.5
+    },
+    "Dancehall": {
+      "feestelijk": 0.8,
+      "energiek": 0.7
+    },
+    "Boom Bap": {
+      "nostalgisch": 0.7,
+      "energiek": 0.6,
+      "focus": 0.4
+    },
+    "Conscious": {
+      "focus": 0.4,
+      "warm": 0.4
+    },
+    "Baroque": {
+      "focus": 0.8,
+      "rustig": 0.6
+    },
+    "Romantic": {
+      "melancholisch": 0.6,
+      "dromerig": 0.6,
+      "rustig": 0.5
+    },
+    "Modern": {
+      "avontuurlijk": 0.7,
+      "focus": 0.5
+    },
+    "Contemporary": {
+      "avontuurlijk": 0.7,
+      "dromerig": 0.5
+    },
+    "Neo-Classical": {
+      "dromerig": 0.7,
+      "melancholisch": 0.6,
+      "focus": 0.6
+    },
+    "Opera": {
+      "nostalgisch": 0.5,
+      "melancholisch": 0.5
+    },
+    "Soundtrack": {
+      "dromerig": 0.6,
+      "nostalgisch": 0.6,
+      "focus": 0.5
+    },
+    "Score": {
+      "dromerig": 0.7,
+      "focus": 0.6
+    },
+    "Musical": {
+      "feestelijk": 0.6,
+      "nostalgisch": 0.6
+    },
+    "Holiday": {
+      "feestelijk": 0.6,
+      "nostalgisch": 0.6,
+      "warm": 0.6,
+      "_seizoen": "kerst"
+    },
+    "Comedy": {
+      "_standaard_uitsluiten": true
+    },
+    "Spoken Word": {
+      "_standaard_uitsluiten": true
+    }
+  },
+  "seizoensmomenten": {
+    "_uitleg": "Discogs kent alleen de style 'Holiday' als thema. Voor de rest: gebruik een eigen notitieveld in je Discogs-collectie (custom field 'thema') of een aparte folder.",
+    "kerst": {
+      "van": "12-01",
+      "tot": "12-26",
+      "match": {
+        "style": [
+          "Holiday"
+        ],
+        "eigen_thema": "kerst"
+      },
+      "buiten_periode": "uitsluiten"
+    },
+    "halloween": {
+      "van": "10-24",
+      "tot": "10-31",
+      "match": {
+        "eigen_thema": "halloween"
+      },
+      "stemming_boost": {
+        "dromerig": 0.3,
+        "melancholisch": 0.3
+      },
+      "style_boost": {
+        "Goth Rock": 0.4,
+        "Score": 0.2
+      }
+    },
+    "sinterklaas": {
+      "van": "11-15",
+      "tot": "12-05",
+      "match": {
+        "eigen_thema": "sinterklaas"
+      },
+      "buiten_periode": "uitsluiten"
+    },
+    "koningsdag": {
+      "van": "04-26",
+      "tot": "04-27",
+      "match": {
+        "land": "Netherlands"
+      },
+      "stemming_boost": {
+        "feestelijk": 0.5
+      }
+    },
+    "oud_en_nieuw": {
+      "van": "12-31",
+      "tot": "01-01",
+      "stemming_boost": {
+        "feestelijk": 0.6,
+        "nostalgisch": 0.3
+      }
+    },
+    "lente": {
+      "van": "03-21",
+      "tot": "06-20",
+      "stemming_boost": {
+        "energiek": 0.2,
+        "avontuurlijk": 0.1
+      }
+    },
+    "zomer": {
+      "van": "06-21",
+      "tot": "09-22",
+      "style_boost": {
+        "Bossa Nova": 0.3,
+        "Samba": 0.3,
+        "Roots Reggae": 0.2,
+        "Ska": 0.2,
+        "Disco": 0.2
+      }
+    },
+    "herfst": {
+      "van": "09-23",
+      "tot": "12-20",
+      "stemming_boost": {
+        "melancholisch": 0.2,
+        "warm": 0.2
+      }
+    },
+    "winter": {
+      "van": "12-21",
+      "tot": "03-20",
+      "stemming_boost": {
+        "warm": 0.3,
+        "rustig": 0.2
+      }
+    }
+  },
+  "tijd_en_dag": {
+    "ochtend": {
+      "van": "06:00",
+      "tot": "11:00",
+      "stemming_boost": {
+        "rustig": 0.3,
+        "focus": 0.3
+      }
+    },
+    "middag": {
+      "van": "11:00",
+      "tot": "17:00",
+      "stemming_boost": {
+        "focus": 0.2,
+        "energiek": 0.2
+      }
+    },
+    "avond": {
+      "van": "17:00",
+      "tot": "22:00",
+      "stemming_boost": {
+        "warm": 0.2,
+        "feestelijk": 0.1
+      }
+    },
+    "laat": {
+      "van": "22:00",
+      "tot": "06:00",
+      "stemming_boost": {
+        "dromerig": 0.4,
+        "rustig": 0.3
+      }
+    },
+    "zondagochtend": {
+      "dag": "zo",
+      "van": "08:00",
+      "tot": "13:00",
+      "genre_boost": {
+        "Jazz": 0.3,
+        "Classical": 0.3
+      }
+    },
+    "vrijdagavond": {
+      "dag": "vr",
+      "van": "18:00",
+      "tot": "02:00",
+      "stemming_boost": {
+        "feestelijk": 0.4,
+        "energiek": 0.3
+      }
+    }
+  }
+}

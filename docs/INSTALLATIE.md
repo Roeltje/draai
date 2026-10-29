@@ -59,9 +59,23 @@ Gebruik een **ongeprivilegieerde Ubuntu 24.04- of 26.04-container** speciaal voo
 
 Dit is een praktische beginconfiguratie, geen gemeten minimum. Open na het aanmaken de **Console van deze container** en log in als root. Alle onderstaande opdrachten draaien daar, niet in de shell van de Proxmox-host. Je hoeft niets op de Proxmox-host te installeren.
 
-### 2. Toegang tot de privé-repository
+### 2. Repository klonen
 
-De repository [Roeltje/draai](https://github.com/Roeltje/draai) is privé. Je GitHub-koppeling in Codex geeft de LXC geen GitHub-aanmelding.
+Kloon de broncode in de LXC. Als de repository openbaar is, werkt HTTPS zonder aanmelding. Zolang hij privé is, is een eigen GitHub-account met leestoegang nodig; de GitHub-koppeling in Codex geeft de LXC geen aanmelding.
+
+Voer in de LXC-console uit:
+
+```sh
+apt-get update
+apt-get install -y ca-certificates git
+git clone https://github.com/Roeltje/draai.git /root/draai-bron
+```
+
+Als de repository nog privé is, gebruik dan in plaats daarvan deze clone-opdracht; voer bij Username `Roeltje` in en plak bij Password een GitHub-token met alleen Contents: Read-only. Het wachtwoordveld toont niets tijdens plakken. De opdracht bewaart het token niet in Git-configuratie of de clone-URL. Zet het token niet in de URL.
+
+```sh
+git -c credential.helper= clone https://github.com/Roeltje/draai.git /root/draai-bron
+```
 
 Maak op GitHub bij **Settings → Developer settings → Personal access tokens → Fine-grained tokens** een token met:
 
@@ -72,15 +86,7 @@ Maak op GitHub bij **Settings → Developer settings → Personal access tokens 
 
 Zie de [GitHub-handleiding voor tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens). De container hoeft alleen code te lezen; schrijfrechten zijn niet nodig.
 
-Voer in de LXC-console uit:
-
-```sh
-apt-get update
-apt-get install -y ca-certificates git
-git -c credential.helper= clone https://github.com/Roeltje/draai.git /root/draai-bron
-```
-
-Vul bij Username `Roeltje` in en plak bij Password het token, niet je GitHub-wachtwoord. Het wachtwoordveld toont niets tijdens plakken. Deze opdracht bewaart het token niet in Git-configuratie of de clone-URL. Zet het token ook niet zelf in de URL. Als je al een SSH-deploykey met leestoegang hebt ingesteld, mag je in plaats daarvan via `git@github.com:Roeltje/draai.git` klonen.
+Een ingestelde SSH-deploykey met leestoegang kan ook worden gebruikt via `git@github.com:Roeltje/draai.git`.
 
 ### 3. Installeren
 
@@ -188,7 +194,7 @@ De installer en updater zijn samen met 15 tests met nagebootste systeemopdrachte
 
 ### App bijwerken
 
-Voer updates uit als root **binnen de LXC**. De updatebron is de clone `/root/draai-bron`. Haal eerst de nieuwste commit op met de Git-aanmelding die je voor de privérepository hebt ingesteld (read-only toegang is voldoende):
+Voer updates uit als root **binnen de LXC**. De updatebron is de clone `/root/draai-bron`. Haal de nieuwste commit op (`git pull` werkt zonder aanmelding zodra de repository openbaar is; bij een privé-repository is lees-toegang nodig):
 
 ```sh
 git -C /root/draai-bron pull --ff-only origin main
@@ -196,6 +202,8 @@ bash /root/draai-bron/scripts/update-lxc.sh \
   --source /root/draai-bron \
   --ref main
 ```
+
+De clone is de bronmap voor de updater; de opdrachten hierboven volgen de standaardinstallatiepaden.
 
 Je kunt ook `--repo` gebruiken als je Git-aanmelding in de LXC werkt. Geef nooit een token of wachtwoord mee in de repository-URL. `--source` exporteert de gecommitteerde versie uit de clone; niet-gecommitteerde wijzigingen worden niet meegenomen.
 
