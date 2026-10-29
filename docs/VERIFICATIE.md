@@ -44,3 +44,11 @@ De tijdens de browsercontrole gemaakte testgeschiedenis is uit de opgeleverde de
 - Nieuwe statistieken ook visueel bekeken op1280×800; mobiele schermafbeelding opgeslagen. Seizoenlabel Winter opslaan en terugzetten naar automatisch via de interface gecontroleerd. Voorkeuren en sessie bleven na serverherstart behouden.
 
 - Persoonlijke configuratie:19 relevante tests en productiebuild geslaagd. Beide ontbrekende-ID-gevallen via het echte serverstartpunt gecontroleerd: exit vóór database/start, zonder sleutel in foutmelding. Geen persoonlijke username/station-ID/domein meer in bijgehouden huidige bestanden.
+
+
+## Homepage/Knus/stijlpresets — 29 oktober 2026
+- 78/78 tests geslaagd, inclusief lokale SSE-tests. Typecheck en productiebuild geslaagd na laatste interfacecorrectie.
+- Dagrotatie: Amsterdamse winter-/zomertijd, jaargrens, stabiele volgorde, 0/1/2 records, uitsluitingen en verouderde gegevens. Geen extra externe verzoeken.
+- Stijlvoorkeuren: initieel vullen, oude voorkeuren migreren, herstartbehoud, expliciet lege regels/lijsten, oudere clients, invoervalidatie, stijl/genre/handmatige prioriteit en begrensde weging getest.
+- Productiebuild visueel gecontroleerd op 390×844 en 1280×800. Ambient→Knus toegevoegd, opgeslagen en na herladen bevestigd. Knus gekozen, suggestie bevestigd, notitie ingevuld, sessie afgerond en geschiedenis/statistieken zichtbaar gecontroleerd. Tijdelijke demodata buiten de repository gebruikt.
+- Geen echte Discogs-/WU-accountoproepen of LXC-update uitgevoerd in deze ronde. GitHub-regel wel opgeslagen maar niet afgedwongen zolang dit private repositoryplan dat niet ondersteunt; secret scanning/push protection na openbaar maken opnieuw controleren.

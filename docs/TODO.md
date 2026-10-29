@@ -1,6 +1,6 @@
 # Draai — geprioriteerde backlog
 
-Bijgewerkt: 29 oktober 2026. Dit is een keuzelijst, geen opdracht om alles te bouwen. Eerst samen een kleine tranche kiezen. Prioriteit weegt persoonlijk nut voor Roel, bouw- en testwerk, onzekerheid, terugkerende kosten en tokenbeslag. De publiek-repo-afwerking blijft een bestaande opdracht; nieuwe productideeën hieronder zijn nog niet goedgekeurd voor uitvoering.
+Bijgewerkt: 29 oktober 2026. Dit is een keuzelijst, geen opdracht om alles te bouwen. Eerst samen een kleine tranche kiezen. Prioriteit weegt persoonlijk nut voor Roel, bouw- en testwerk, onzekerheid, terugkerende kosten en tokenbeslag. De publiek-repo-afwerking blijft een bestaande opdracht; overige nieuwe productideeën hieronder zijn nog niet goedgekeurd voor uitvoering. H01, M01 en de basis van M02 zijn inmiddels op verzoek gebouwd.
 
 ## Schaal en werkwijze
 
@@ -16,10 +16,10 @@ Bijgewerkt: 29 oktober 2026. Dit is een keuzelijst, geen opdracht om alles te bo
 
 | ID | Prio | Taak | Werk / tokens | Klaar als |
 |---|---|---|---|---|
-| G01 | P0 | Publieke repo voorbereiden: portable paden, MIT, documentatie | S / laag | LICENSE en pakketlicentie aanwezig, geen machinegebonden paden, publieke clone plus optionele private toegang beschreven; naar GitHub gepubliceerd. Docs zijn deels lokaal aangepast; MIT nog niet toegevoegd. |
-| G02 | P0 | GitHub security-instellingen afronden | S–M / middel | Dependency graph en Dependabot alerts zijn aangezet; security-updates, secret scanning/push protection en main-bescherming nog controleren/instellen voor zover account/zichtbaarheid dat toestaat. Eventuele beperking noteren. Geen betaald abonnement inschakelen. Repo nog niet publiek maken zonder expliciete opdracht. |
+| G01 | P0 | Publieke repo voorbereiden: portable paden, MIT, documentatie | S / laag | LICENSE en pakketlicentie aanwezig, geen machinegebonden paden, publieke clone plus optionele private toegang beschreven; naar GitHub gepubliceerd. Afgerond: MIT, portable docs en korte updatehandleiding gepubliceerd. |
+| G02 | P0 | GitHub security-instellingen afronden | S–M / middel | Dependency graph, alerts, security-updates en malwarealerts aangezet; main-regel opgeslagen. Secret scanning/push protection na publicatie controleren; main-regel wordt op huidig private plan niet afgedwongen. Eventuele beperking noteren. Geen betaald abonnement inschakelen. Repo nog niet publiek maken zonder expliciete opdracht. |
 | G03 | P0 | Losse korte LXC-updatehandleiding en eerste praktijkcheck | S / laag | Clone vernieuwen, updater uitvoeren, config/data behouden; werkelijk resultaat op Ubuntu26.04 apart bevestigen. Updater bestaat al, gesimuleerde foutpaden getest. |
-| H01 | P1 | Afwisselende homepagehoezen | S / laag | Twee verschillende beschikbare, verse hoezen uit eigen collectie; bijvoorbeeld dagelijks wisselen in Amsterdamse tijd en stabiel tijdens paginagebruik. Geen nieuwe volledige API-import nodig; 0, 1 en 2 platen en verlopen data werken. |
+| H01 | Klaar | Afwisselende homepagehoezen | S / laag | Twee verschillende beschikbare, verse hoezen uit eigen collectie; bijvoorbeeld dagelijks wisselen in Amsterdamse tijd en stabiel tijdens paginagebruik. Geen nieuwe volledige API-import nodig; 0, 1 en 2 platen en verlopen data werken. |
 
 Homepagebevinding: `src/main.tsx` gebruikt momenteel `records[0]` en `records[2]`. Geen rotatie; dezelfde sortering geeft dezelfde hoezen. Begin met dagrotatie, niet met een voortdurend bewegende carrousel. Een optionele knop voor nieuwe hoezen kan later.
 
@@ -27,8 +27,8 @@ Homepagebevinding: `src/main.tsx` gebruikt momenteel `records[0]` en `records[2]
 
 | ID | Prio | Idee / opbrengst | Werk / tokens | Kleinste bruikbare scope en afhankelijkheid |
 |---|---|---|---|---|
-| M01 | P1 | Stemming Warm zichtbaar hernoemen naar Knus | XS / laag | Interne sleutel `warm` behouden; labels/toelichting aanpassen zodat bestaande voorkeuren intact blijven. |
-| M02 | P1 | Voorgevulde stylemapping en inventaris | M / middel | Lever meteen een ingeschakelde, bruikbare standaardmapping voor styles met genre-fallback; de gebruiker hoeft geen lege editor te vullen. Eigen plaatlabels gaan vóór style, style vóór genre. Toon standaard versus eigen aanpassing, dekking, uitzetten en reset. Tel top 30–50 styles om hiaten te vinden, niet als voorwaarde voor gebruik. Bestaande eigen regels nooit overschrijven bij updates. Eerst bestaande stemmingen, niet meteen alle weerregels. |
+| M01 | Klaar | Stemming Warm zichtbaar hernoemen naar Knus | XS / laag | Interne sleutel `warm` behouden; labels/toelichting aanpassen zodat bestaande voorkeuren intact blijven. |
+| M02 | Basis klaar / rest P2 | Voorgevulde stylemapping en inventaris | M / middel | Gebouwd: 91 ingeschakelde stijlregels, 13 genredefaults, bewerken/uitzetten en reset als concept. Nog later: expliciete standaard/eigen-badges, dekkingscijfers en topstyles-inventaris. Lever een bruikbare standaardmapping voor styles met genre-fallback; de gebruiker hoeft geen lege editor te vullen. Eigen plaatlabels gaan vóór style, style vóór genre. Toon standaard versus eigen aanpassing, dekking, uitzetten en reset. Tel top 30–50 styles om hiaten te vinden, niet als voorwaarde voor gebruik. Bestaande eigen regels nooit overschrijven bij updates. Eerst bestaande stemmingen, niet meteen alle weerregels. |
 | M03 | P2 | Melancholisch, Feestelijk, Focus, Dromerig | M / middel | Per stemming kiezen wat echt nodig is; gedeelde types, API-validatie, labels, opslagcompatibiliteit, filters en tests meenemen. Focus betekent voorkeur, geen bewijs van weinig zang. |
 | M04 | P1 | Warm/koud-drempels instelbaar | S–M / middel | Getalvelden/sliders met validatie en reset; huidige koudegrens van 10 °C niet stilzwijgend vervangen door concept van 5 °C. Warmte is nu 22 °C. Hysterese pas met stabiele opslag van conditiestatus. |
 | M05 | P2 | Gewogen mappings0–1 en begrensde gecombineerde score | M–L / hoog | Schema/importvalidatie, uitleg per bijdrage, meerdere styles normaliseren/maximeren zodat veel labels niet automatisch winnen. Eerst simpele presets zonder uitgebreide gewichten-editor. |
@@ -101,9 +101,9 @@ Homepagebevinding: `src/main.tsx` gebruikt momenteel `records[0]` en `records[2]
 - Statistieken sessies/unieke exemplaren/geregistreerde tijd/dekking, gescheiden demo/live-opslag.
 - Manifest/Appleiconen, LXC-installatie/updater en consistente CLI-SQLiteback-up. Updater maakt ook koude herstelkopie; echte LXC-updatetest nog bevestigen.
 
-## Beoordeling aangeleverde mapping (niet actief)
+## Beoordeling aangeleverde mapping (origineel concept)
 
-Het oorspronkelijke JSON is bewaard als [conceptmapping](voorstellen/draai-mapping.concept.json). Geldige JSON met 9 stemmingen, 15 genres en 99 styles; geen code importeert dit bestand. De tekst en externe API-/hardwareclaims zijn voorstellen, geen geverifieerde documentatie.
+Het oorspronkelijke JSON is bewaard als [conceptmapping](voorstellen/draai-mapping.concept.json). Geldige JSON met 9 stemmingen, 15 genres en 99 styles; de app importeert dit bestand niet rechtstreeks. De actieve preset in shared/moodDefaults.ts neemt ondersteunde moods met gewicht vanaf 0,5 over als eenvoudige verbanden; de overige voorstellen blijven voor later. De tekst en externe API-/hardwareclaims zijn voorstellen, geen geverifieerde documentatie.
 
 1. Sleutels verschillen: `rustig→rust`, `energiek→energie`, `avontuurlijk→avontuur`, `nostalgisch→nostalgie`. `warm` kan intern blijven en zichtbaar Knus worden. Nieuwe moods vereisen M03. Onbekende keys niet stilzwijgend negeren.
 2. Prioriteit: expliciete eigen plaatlabels → gemapte styles → genre. Optionele persoonlijke weervoorkeuren blijven leidend. Vooraf dekking tonen; alle nulscores moeten gewone selectie toelaten.

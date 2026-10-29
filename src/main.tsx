@@ -34,6 +34,7 @@ import { SeasonEditor } from "./SeasonEditor";
 import { ListeningStats } from "./ListeningStatsPanel";
 import { formatRegisteredDuration } from "./listeningStats";
 import { PreferencesEditor } from "./PreferencesEditor";
+import { homeCovers } from "./homeCovers";
 import { protectState, nextExpiry, recordExpired } from "./freshness";
 
 type Page =
@@ -47,7 +48,7 @@ type Page =
 const moods: { id: Mood; label: string; hint: string }[] = [
   { id: "alles", label: "Verras me", hint: "Alles mag" },
   { id: "rust", label: "Rustig", hint: "Even vertragen" },
-  { id: "warm", label: "Warm", hint: "Voor de gezelligheid" },
+  { id: "warm", label: "Knus", hint: "Voor de gezelligheid" },
   { id: "energie", label: "Energiek", hint: "Een beetje vaart" },
   { id: "avontuur", label: "Avontuurlijk", hint: "Buiten de lijntjes" },
   { id: "nostalgie", label: "Nostalgisch", hint: "Even terug in de tijd" },
@@ -128,11 +129,12 @@ function App() {
   const [useAnniversaries, setUseAnniversaries] = useState(true);
   const [useSeasons, setUseSeasons] = useState(true),
     [useWeather, setUseWeather] = useState(false),
-    [useGenreMoods, setUseGenreMoods] = useState(false);
+    [useGenreMoods, setUseGenreMoods] = useState(true);
   const detailAttempts = useRef(new Map<string, number>());
   const [detailError, setDetailError] = useState("");
   const [clock, setClock] = useState(0);
   const state = protectState(rawState);
+  const dailyCovers = homeCovers(state?.records || []);
   useEffect(() => {
     const deadline = nextExpiry(rawState);
     if (deadline === null) return;
@@ -667,11 +669,13 @@ function App() {
                       <br />
                       OP DE DRAAITAFEL.
                     </span>
-                    {records.length ? (
+                    {dailyCovers.length ? (
                       <>
-                        <div className="sleeve-back">
-                          {records[2] && <Cover record={records[2]} priority />}
-                        </div>
+                        {dailyCovers[1] && (
+                          <div className="sleeve-back">
+                            <Cover record={dailyCovers[1]} priority />
+                          </div>
+                        )}
                         <div className="vinyl">
                           <div className="vinyl-label">
                             <span>DRAAI</span>
@@ -680,7 +684,7 @@ function App() {
                           </div>
                         </div>
                         <div className="sleeve-main">
-                          <Cover record={records[0]} priority />
+                          <Cover record={dailyCovers[0]} priority />
                         </div>
                         <div className="art-caption">
                           <span>HERONTDEK WAT JE AL HEBT</span>
@@ -689,21 +693,19 @@ function App() {
                         {!demo && (
                           <div className="hero-art-source">
                             <span>Data provided by Discogs</span>
-                            {[records[0], records[2]]
-                              .filter(Boolean)
-                              .map((record, i) => (
-                                <a
-                                  key={record.id}
-                                  href={
-                                    record.sourceUrl ||
-                                    `https://www.discogs.com/release/${record.releaseId}`
-                                  }
-                                  target="_blank"
-                                  rel="noreferrer"
-                                >
-                                  Hoes {i + 1} ↗
-                                </a>
-                              ))}
+                            {dailyCovers.map((record, i) => (
+                              <a
+                                key={record.id}
+                                href={
+                                  record.sourceUrl ||
+                                  `https://www.discogs.com/release/${record.releaseId}`
+                                }
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                Hoes {i + 1} ↗
+                              </a>
+                            ))}
                           </div>
                         )}
                       </>
@@ -794,10 +796,10 @@ function App() {
                           }
                         />
                         <span>
-                          Neem mijn genreregels mee
+                          Neem stijl- en genreverbanden mee
                           <small>
-                            Alleen je eigen verbanden bij Instellingen. Geen
-                            automatische genrevooroordelen.
+                            Bewerkbare startverbanden bij Instellingen. Je eigen
+                            plaatlabels gaan altijd voor.
                           </small>
                         </span>
                       </label>
@@ -1643,6 +1645,9 @@ function App() {
                   </section>
                   <PreferencesEditor
                     preferences={state.preferences}
+                    styles={[
+                      ...new Set(records.flatMap((record) => record.styles)),
+                    ].sort((a, b) => a.localeCompare(b, "nl"))}
                     genres={[
                       ...new Set(records.flatMap((record) => record.genres)),
                     ].sort((a, b) => a.localeCompare(b, "nl"))}

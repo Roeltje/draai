@@ -61,4 +61,13 @@ Nieuwe ideeën geïnventariseerd in TODO.md met prioriteit, werk/tokeninschattin
 Gebruikerskeuze: style-/genrestartmapping standaard ingevuld en actief, eigen tweaks behouden; voorgestelde volgorde onderschreven. Hardware en extra PWA-functies voor later. Dit is vastgelegd in TODO.md; nog geen mappingcode gebouwd.
 
 ## Publieke repository voorbereiden
-MIT-licentie, portable ontwikkelinstructies, SECURITY.md, korte LXC-updatehandleiding en wekelijkse Dependabot-configuratie toegevoegd. Dependency graph, Dependabot alerts, security updates en malware alerts via GitHub bevestigd ingeschakeld. Branchregel (geen force-push/verwijderen) voorbereid; opslaan vraagt GitHub-wachtwoordbevestiging. Op huidige private plan worden rulesets niet afgedwongen. Secret scanning/push protection niet aangeboden op deze private instellingenpagina: na openbaar maken controleren. Zichtbaarheid niet gewijzigd; geen betaald abonnement geactiveerd.
+MIT-licentie, portable ontwikkelinstructies, SECURITY.md, korte LXC-updatehandleiding en wekelijkse Dependabot-configuratie toegevoegd. Dependency graph, Dependabot alerts, security updates en malware alerts via GitHub bevestigd ingeschakeld. Branchregel Protect main (geen force-push/verwijderen, geen bypass) na gebruikersbevestiging opgeslagen voor default branch main. Op huidige private plan worden rulesets niet afgedwongen. Secret scanning/push protection niet aangeboden op deze private instellingenpagina: na openbaar maken controleren. Zichtbaarheid niet gewijzigd; geen betaald abonnement geactiveerd.
+
+
+## Homepage en stijlvoorkeuren afgerond — 29 oktober 2026
+- Afgebakend bouwwerk door GPT-6.1 Sol medium; hoofdagent controleerde migratie, selectie, interface en integratie. Kleine browserbevinding door dezelfde frontendagent opgelost: zonder passende collectiestijlen verschijnen de presets meteen.
+- Dagelijkse homepagehoezen in Amsterdamse tijd, zonder extra API-import. Maximaal twee verschillende exemplaren; lege/kleine/verlopen collecties afgevangen.
+- Warm zichtbaar hernoemd naar Knus, interne sleutel behouden. 91 stijlregels en 13 genredefaults; persoonlijke plaatlabels vóór stijl vóór genre. Stijlen standaard actief, weer niet stilzwijgend ingeschakeld.
+- Eenmalige upgrade vult ontbrekende stijlregels, bewaart eigen genre-/weerregels en expliciet lege stijllijsten. Bewerken en terugzetten naar standaard werkt via concept en opslaan.
+- 78 tests, typecontrole en productiebuild geslaagd. Mobiele en brede browsercontrole, voorkeur opslaan/herladen en kiezen/starten/afronden/geschiedenis gecontroleerd met een aparte tijdelijke demodatabase.
+- M02-dekking/topstyles-inventaris en badges standaard/eigen blijven vervolgwerk. Pushreminders en begrensde geschatte speeltijd staan op de backlog, niet gebouwd.

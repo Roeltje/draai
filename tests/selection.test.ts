@@ -256,7 +256,10 @@ test("preferences and nostalgia persist; API rejects malformed mappings and supp
     await app.close();
     const reopened = new Service(c);
     try {
-      assert.deepEqual(reopened.preferences(), prefs);
+      assert.deepEqual(reopened.preferences(), {
+        ...prefs,
+        styleMoods: DEFAULT_PREFERENCES.styleMoods,
+      });
       assert.deepEqual(reopened.store.record("demo-1")!.tags, ["nostalgie"]);
     } finally {
       await reopened.close();

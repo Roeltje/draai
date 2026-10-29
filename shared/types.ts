@@ -3,6 +3,7 @@ export type Mood =
 export type Season = "lente" | "zomer" | "herfst" | "winter" | "kerst";
 export interface SelectionPreferences {
   genreMoods: Array<{ genre: string; moods: Mood[] }>;
+  styleMoods?: Array<{ style: string; moods: Mood[] }>;
   weatherMoods: { rain: Mood[]; cold: Mood[]; warm: Mood[] };
 }
 export interface Track {

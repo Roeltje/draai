@@ -3635,3 +3635,71 @@ h2 {
     height: 30px;
   }
 }
+
+.rule-count {
+  color: var(--muted);
+  font-size: 10px;
+  margin-left: 10px;
+  white-space: nowrap;
+}
+.rule-scope {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 11px;
+  line-height: 1.7;
+  margin: 10px 0 20px;
+}
+.rule-scope input {
+  accent-color: var(--ink);
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+}
+.rule-select-label {
+  display: block;
+  font-size: 11px;
+  margin-bottom: 8px;
+}
+.rule-select {
+  width: 100%;
+  max-width: 520px;
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: 12px;
+  background: #eae6da;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  margin-bottom: 15px;
+}
+.rule-reset {
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+  margin-top: 20px;
+}
+.rule-reset > button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  text-align: left;
+  line-height: 1.7;
+  border: 1px solid var(--line);
+  padding: 12px 15px;
+  background: transparent;
+  font-size: 11px;
+  min-height: 46px;
+}
+.rule-reset > p {
+  margin: 12px 0 0;
+}
+@media (max-width: 600px) {
+  .rule-count {
+    display: block;
+    margin: 4px 0 0 19px;
+  }
+  .rule-reset > button {
+    width: 100%;
+  }
+}
