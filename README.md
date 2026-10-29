@@ -4,17 +4,17 @@
 
 Draai helpt je opnieuw een plaat uit je eigen vinylcollectie te kiezen. Je kunt een stemming meegeven, een voorstel bevestigen en je luistersessie met een notitie bewaren. De app is bedoeld voor eigen gebruik op je thuisnetwerk.
 
+Draai is beschikbaar onder de [MIT-licentie](LICENSE).
+
 Zonder Discogs-token start Draai in demomodus met zes fictieve platen. Met een Discogs-token gebruikt Draai een aparte live-database. Demo- en live-collectie, voorstellen en luistergeschiedenis blijven gescheiden.
 
-## Op deze Mac proberen
+## Lokaal ontwikkelen
 
-In deze werkmap zijn de pakketten en productie-build al aanwezig. Dubbelklik op `Start Draai.command`, laat het terminalvenster open en open de getoonde URL in je browser (standaard http://127.0.0.1:3210). Stoppen kan met Ctrl+C. Het startbestand gebruikt zo nodig de met Codex meegeleverde Node-runtime.
-
-Voor een verse download of andere computer volg je de installatie hieronder.
+Vereist Node.js 24 en pnpm. Na het klonen van de repository installeer je de pakketten en start je de ontwikkelserver zoals hieronder beschreven. Als de repository openbaar is, werkt een HTTPS-clone zonder aanmelding; zolang hij privé is, zijn GitHub-leesrechten nodig.
 
 ## Installeren op Proxmox LXC
 
-Er is een [installatiescript](scripts/install-lxc.sh) voor een ongeprivilegieerde **Ubuntu 24.04- of 26.04-container**. Het installeert de basissoftware, Node.js 24, pnpm 11.25.0 en Draai als automatisch startende dienst. Begin met 2 CPU’s, 2 GB RAM en 8 GB opslag. Omdat deze repository privé is, heeft de LXC een eigen GitHub-aanmelding met leestoegang nodig.
+Er is een [installatiescript](scripts/install-lxc.sh) voor een ongeprivilegieerde **Ubuntu 24.04- of 26.04-container**. Het installeert de basissoftware, Node.js 24, pnpm 11.25.0 en Draai als automatisch startende dienst. Begin met 2 CPU’s, 2 GB RAM en 8 GB opslag. Een openbare repository kan via HTTPS zonder aanmelding worden gekloond; zolang deze privé is, heeft de LXC GitHub-leestoegang nodig.
 
 Volg [de stapsgewijze LXC-handleiding](docs/INSTALLATIE.md#proxmox-lxc-aanbevolen-installatie). Voer scripts binnen de container uit, niet op de Proxmox-host. Bewaar de productieconfiguratie in `/etc/draai.env`; daarmee kun je later updates uitvoeren zonder je instellingen te vervangen. De aparte updater heeft een expliciete procedure en maakt vóór de codewissel een herstelbare back-up.
 
@@ -75,3 +75,5 @@ De geschiedenis bevat statistieken over geregistreerde sessies, unieke exemplare
 Op iPhone/iPad: open de HTTPS-site in Safari en kies **Deel → Zet op beginscherm**. Er zijn aparte Apple- en manifesticonen. Dit voegt geen offlinewerking toe. Een eerder bewaard icoon kan opnieuw toevoegen vereisen. Iconen opnieuw genereren: `node scripts/generate-icons.mjs`.
 
 Discogs-gebruikersnaam en weerstation-ID hebben geen ingebouwde standaardwaarde. Vul `DISCOGS_USERNAME` en `WU_STATION_ID` uitsluitend in je eigen `.env` (LXC: `/etc/draai.env`) in. De meegeleverde configuratie bevat lege velden; upgrades bewaren bestaande waarden.
+
+Kort bijwerken vanuit de LXC: [UPDATEN.md](docs/UPDATEN.md). Zie ook [veilig gebruik](SECURITY.md). De MIT-licentie geldt voor deze broncode; externe gegevens houden hun eigen voorwaarden.

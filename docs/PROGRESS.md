@@ -54,3 +54,11 @@ Zie VERIFICATIE.md voor bewijs en grenzen van de uitgevoerde controles.
 
 ## Persoonlijke configuratie
 Discogs-gebruikersnaam en weerstation-ID uitsluitend via eigen omgevingsconfiguratie; geen persoonlijke defaults in code, installatievoorbeeld of documentatie. Voorbeelddomein generiek gemaakt. Bestaande lokale configuratie blijft behouden. Oudere Git-commits zijn niet herschreven.
+
+## Backlog op verzoek — 29 oktober 2026
+Nieuwe ideeën geïnventariseerd in TODO.md met prioriteit, werk/tokeninschatting en afhankelijkheden. Aangeleverde JSON bewaard als niet-actief concept in docs/voorstellen. Homepage gebruikt vaste records0en2; dagrotatie voorgesteld, nog niet gebouwd. Gebruiker wil eerst kiezen, daarna implementeren. GitHub/publicatiestap blijft open; dependency graph en Dependabot alerts wel aangezet, overige settings nog afronden.
+
+Gebruikerskeuze: style-/genrestartmapping standaard ingevuld en actief, eigen tweaks behouden; voorgestelde volgorde onderschreven. Hardware en extra PWA-functies voor later. Dit is vastgelegd in TODO.md; nog geen mappingcode gebouwd.
+
+## Publieke repository voorbereiden
+MIT-licentie, portable ontwikkelinstructies, SECURITY.md, korte LXC-updatehandleiding en wekelijkse Dependabot-configuratie toegevoegd. Dependency graph, Dependabot alerts, security updates en malware alerts via GitHub bevestigd ingeschakeld. Branchregel (geen force-push/verwijderen) voorbereid; opslaan vraagt GitHub-wachtwoordbevestiging. Op huidige private plan worden rulesets niet afgedwongen. Secret scanning/push protection niet aangeboden op deze private instellingenpagina: na openbaar maken controleren. Zichtbaarheid niet gewijzigd; geen betaald abonnement geactiveerd.
