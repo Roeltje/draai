@@ -190,6 +190,7 @@ test("full collection pagination preserves duplicate copies and artist IDs, remo
   });
   try {
     await service.synchronize();
+    await service.waitForBackground();
     assert.equal(service.state().records.length, 3);
     assert.equal(detailsCalls, 1);
     assert.deepEqual(
@@ -198,6 +199,7 @@ test("full collection pagination preserves duplicate copies and artist IDs, remo
     );
     fail = true;
     await service.synchronize();
+    await service.waitForBackground();
     assert.equal(
       service.state().records.find((r) => r.id === "3")?.available,
       true,
@@ -223,6 +225,7 @@ test("partial first scan saves arrived pages and does not claim a successful col
   });
   try {
     await service.synchronize();
+    await service.waitForBackground();
     assert.equal(service.state().records.length, 1);
     assert.equal(service.state().sync.lastSuccess, null);
     assert.equal(service.state().settings.collectionStale, true);
@@ -244,11 +247,13 @@ test("successful full scan marks missing copies unavailable but preserves privat
   });
   try {
     await service.synchronize();
+    await service.waitForBackground();
     service.select("alles", false, "2");
     service.start(service.state().selection!.id);
     service.finish(service.state().activeSession!.id, "Bewaren");
     releases = [item(1)];
     await service.synchronize();
+    await service.waitForBackground();
     assert.equal(
       service.state().records.find((r) => r.id === "2")?.available,
       false,
@@ -278,6 +283,7 @@ test("stale API metadata is hidden everywhere; basic refresh does not freshen ol
   });
   try {
     await service.synchronize();
+    await service.waitForBackground();
     service.select();
     service.start(service.state().selection!.id);
     service.finish(service.state().activeSession!.id, "Eigen tekst");
@@ -291,9 +297,12 @@ test("stale API metadata is hidden everywhere; basic refresh does not freshen ol
     assert.throws(() => service.select(), /Geen geschikte/);
     detailFailure = true;
     await service.synchronize();
+    await service.waitForBackground();
     assert.equal(service.state().records[0].title, "Fixture 100");
     assert.equal(service.state().records[0].tracks.length, 0);
     assert.equal(service.state().records[0].country, "");
+    service.requestRecord(service.state().records[0].id);
+    await service.waitForBackground();
     assert.match(service.state().sync.error!, /tijdelijk/);
   } finally {
     await service.close();
@@ -301,10 +310,10 @@ test("stale API metadata is hidden everywhere; basic refresh does not freshen ol
   }
 });
 
-test("five-hour synchronization refreshes details before the six-hour display expiry", async () => {
+test("five-hour scans leave bulk details alone while the selected record renews before expiry", async () => {
   const { config, cleanup } = setup({ token: "fixture" });
-  let now = instant;
-  let calls = 0;
+  let now = instant,
+    calls = 0;
   const service = new Service(config, {
     now: () => now,
     wait: async () => {},
@@ -321,19 +330,20 @@ test("five-hour synchronization refreshes details before the six-hour display ex
   });
   try {
     await service.synchronize();
+    await service.waitForBackground();
     assert.equal(calls, 1);
-    now += REFRESH_INTERVAL - 1;
+    now += REFRESH_INTERVAL;
     await service.synchronize();
+    await service.waitForBackground();
     assert.equal(calls, 1);
-    now++;
-    await service.synchronize();
+    service.select();
+    await service.waitForBackground();
     assert.equal(calls, 2);
     now = instant + MAX_AGE + 1;
     assert.equal(service.state().records[0].tracks[0].title, "Version 2");
-    // Scheduled refreshes include details fetched after the previous timer began.
-    // They can be just under five hours old, yet must not wait another five hours.
-    now = instant + 2 * REFRESH_INTERVAL - 1;
-    await service.synchronize(true);
+    now += REFRESH_INTERVAL;
+    service.refreshActive();
+    await service.waitForBackground();
     assert.equal(calls, 3);
   } finally {
     await service.close();
@@ -353,6 +363,7 @@ test("confirmation revalidates an old proposal after exclusions, removal, format
   });
   try {
     await service.synchronize();
+    await service.waitForBackground();
     service.select();
     const selection = service.state().selection!;
     const original = service.store.record(selection.record.id)!;
@@ -369,6 +380,7 @@ test("confirmation revalidates an old proposal after exclusions, removal, format
     now += MAX_AGE + 1;
     assert.throws(() => service.start(selection.id), /verlopen/);
     await service.synchronize();
+    await service.waitForBackground();
     service.start(selection.id);
     const session = service.state().activeSession!;
     service.patch(original.id, { excluded: true });
@@ -399,6 +411,7 @@ test("concurrent synchronization starts only one collection scan", async () => {
   try {
     const a = service.synchronize();
     const b = service.synchronize();
+    await new Promise((r) => setImmediate(r));
     assert.equal(calls, 1);
     release();
     await Promise.all([a, b]);
@@ -601,6 +614,7 @@ test("configured credentials never appear in API state or upstream failure respo
   try {
     await service.refreshWeather();
     await service.synchronize();
+    await service.waitForBackground();
     const response = await app.inject("/api/state");
     const state = response.json();
     assert.equal(state.settings.discogsConfigured, true);
@@ -683,6 +697,7 @@ test(
     const controller = new AbortController();
     try {
       await service.synchronize();
+      await service.waitForBackground();
       const address = await app.listen({ port: 0, host: "127.0.0.1" });
       const response = await fetch(`${address}/api/events`, {
         signal: controller.signal,

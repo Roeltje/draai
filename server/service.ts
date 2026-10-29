@@ -7,7 +7,11 @@ import type {
   RecordItem,
   SyncState,
   WeatherState,
+  Season,
+  SelectionPreferences,
 } from "../shared/types.ts";
+import { WorkQueue } from "./queue.ts";
+import { DEFAULT_PREFERENCES, selectionFactors } from "../shared/selection.ts";
 import { Store } from "./store.ts";
 import { demoRecords } from "./demo.ts";
 import { KnowledgeClient, KNOWLEDGE_TTL, occasionsFor } from "./knowledge.ts";
@@ -67,7 +71,8 @@ export class Service {
   private client: DiscogsClient;
   private syncTask: Promise<void> | null = null;
   private knowledge: KnowledgeClient;
-  private enrichmentTask: Promise<void> | null = null;
+  private queue: WorkQueue;
+  private closing = false;
   private enrichment: NonNullable<AppState["enrichment"]>;
   constructor(
     public config: Config,
@@ -89,7 +94,13 @@ export class Service {
       }
       this.store.set("demoKnowledgeVersion", 1);
     }
-    this.knowledge = new KnowledgeClient(this.fetcher, deps.wait, this.now);
+    this.queue = new WorkQueue(deps.wait);
+    this.knowledge = new KnowledgeClient(
+      this.fetcher,
+      deps.wait,
+      this.now,
+      this.store,
+    );
     this.enrichment = this.store.get("enrichment", {
       running: false,
       progress: "Nog geen albuminformatie opgehaald",
@@ -206,6 +217,7 @@ export class Service {
       history: sessions.filter((s) => s.ended_at).map(session),
       sync: { ...this.sync },
       weather,
+      preferences: this.preferences(),
       occasions: occasionsFor(records, this.now()),
       enrichment: { ...this.enrichment },
       settings: {
@@ -223,9 +235,11 @@ export class Service {
   }
   select(
     mood: Mood = "alles",
-    _useWeather = false,
+    useWeather = false,
     recordId?: string,
     useAnniversaries = true,
+    useSeasons = true,
+    useGenreMoods = false,
   ) {
     if (this.state().activeSession)
       throw new AppError(409, "Rond eerst de actieve luistersessie af.");
@@ -238,6 +252,15 @@ export class Service {
           r.isLP &&
           (r.demo || !stale(r.fetchedAt, this.now())),
       );
+    const prefs = this.preferences(),
+      weather = this.state().weather;
+    const factors = (r: RecordItem) =>
+      selectionFactors(r, mood, prefs, weather, this.now(), {
+        useWeather,
+        useSeasons,
+        useGenreMoods,
+      });
+    if (!recordId) eligible = eligible.filter((r) => !factors(r).blocked);
     if (recordId) eligible = eligible.filter((r) => r.id === recordId);
     if (!eligible.length)
       throw new AppError(
@@ -276,14 +299,14 @@ export class Service {
         ? Math.max(0, (this.now() - Date.parse(last)) / 86400000)
         : null;
       const historyWeight = days === null ? 2 : 1 + Math.min(days / 30, 2);
-      const moodWeight = mood !== "alles" && record.tags.includes(mood) ? 2 : 1;
+      const personal = factors(record);
       const occasion = occasions.find((o) => o.recordId === record.id);
       const dateWeight = occasion ? 1.8 : 1;
       return {
         record,
-        weight: historyWeight * moodWeight * dateWeight,
+        weight: historyWeight * personal.weight * dateWeight,
+        personal,
         days,
-        moodWeight,
         occasion,
       };
     });
@@ -302,8 +325,7 @@ export class Service {
       reasons.push(
         `Laatste geregistreerde sessie ${Math.floor(chosen.days)} dagen geleden; dit bepaalt het geschiedenisgewicht.`,
       );
-    if (!recordId && chosen.moodWeight > 1)
-      reasons.push(`Jouw sfeerlabel ‘${mood}’ geeft extra kans.`);
+    if (!recordId) reasons.push(...chosen.personal.reasons);
     if (chosen.occasion)
       reasons.push(
         `${chosen.occasion.description} Daardoor telt deze plaat vandaag 1,8× mee in de loting.`,
@@ -317,6 +339,7 @@ export class Service {
       .prepare("INSERT INTO selections VALUES (?,?,?,?)")
       .run(id, chosen.record.id, JSON.stringify(reasons), this.iso());
     this.store.set("selection", id);
+    this.requestRecord(chosen.record.id);
     this.emit();
   }
   start(selectionId: string) {
@@ -364,13 +387,18 @@ export class Service {
       .run(this.iso(), note ?? "", sessionId);
     this.emit();
   }
-  patch(id: string, body: { tags?: Mood[]; excluded?: boolean }) {
+  patch(
+    id: string,
+    body: { tags?: Mood[]; excluded?: boolean; seasons?: Season[] | null },
+  ) {
     const record = this.store.record(id);
     if (!record) throw new AppError(404, "Plaat niet gevonden.");
-    this.store.put({ ...record, ...body });
+    const updated = { ...record, ...body };
+    if (updated.seasons === null) delete updated.seasons;
+    this.store.put(updated as RecordItem);
     this.emit();
   }
-  async synchronize(refreshDetails = false) {
+  async synchronize(_refreshDetails = false) {
     if (!this.config.token)
       throw new AppError(
         400,
@@ -381,19 +409,20 @@ export class Service {
     this.sync.error = null;
     this.sync.progress = "Collectie ophalen…";
     this.saveSync();
-    this.syncTask = this.runSync(refreshDetails).finally(() => {
+    this.syncTask = this.runSync().finally(() => {
       this.sync.running = false;
       this.syncTask = null;
       this.saveSync();
     });
     return this.syncTask;
   }
-  private async runSync(refreshDetails: boolean) {
+  private async runSync() {
     try {
       let page = 1;
       let pages = 1;
       const seen = new Set<string>();
       do {
+        if (this.closing) return;
         const data = await this.client.get(
           `/users/${encodeURIComponent(this.config.username)}/collection/folders/0/releases?per_page=100&page=${page}`,
         );
@@ -426,25 +455,7 @@ export class Service {
           this.store.put({ ...record, available: false });
       this.sync.lastSuccess = this.iso();
       this.saveSync();
-      const detailCache = new Map<number, Record<string, any>>();
-      for (const record of this.store.records().filter((r) => r.available)) {
-        if (
-          !refreshDetails &&
-          !stale(this.store.detailsAt(record.id), this.now(), REFRESH_INTERVAL)
-        )
-          continue;
-        this.sync.progress = `Releasegegevens ophalen (${detailCache.size + 1})`;
-        this.saveSync();
-        let details = detailCache.get(record.releaseId);
-        if (!details) {
-          details = await this.client.get(`/releases/${record.releaseId}`);
-          detailCache.set(record.releaseId, details);
-        }
-        // Re-read personal fields: user edits during an API request must survive.
-        const current = this.store.record(record.id)!;
-        this.store.put(enrich(current, details), this.iso());
-        this.emit();
-      }
+      this.startBackground();
       this.sync.progress = "Collectie bijgewerkt";
     } catch (error) {
       this.sync.error =
@@ -516,75 +527,156 @@ export class Service {
         "Albumbronnen staan uit. Schakel WIKI_ENABLED=true in op de server om Discogs-album- en artiest-ID’s naar Wikimedia te sturen.",
       );
   }
-  async enrichRecords(id?: string) {
-    this.ensureWikiEnabled();
-    if (id && !this.store.record(id))
-      throw new AppError(404, "Plaat niet gevonden.");
-    if (this.enrichmentTask) {
-      if (id)
-        throw new AppError(
-          409,
-          "Er loopt al een albuminformatie-opdracht. Probeer straks opnieuw.",
-        );
-      return this.enrichmentTask;
-    }
-    this.enrichment = {
-      ...this.enrichment,
-      running: true,
-      error: null,
-      progress: "Albumbronnen ophalen…",
-    };
-    this.store.set("enrichment", this.enrichment);
+  preferences(): SelectionPreferences {
+    return this.store.get("preferences", structuredClone(DEFAULT_PREFERENCES));
+  }
+  setPreferences(preferences: SelectionPreferences) {
+    this.store.set("preferences", preferences);
     this.emit();
-    this.enrichmentTask = this.runEnrichment(id).finally(() => {
-      this.enrichment.running = false;
-      this.enrichmentTask = null;
-      this.store.set("enrichment", this.enrichment);
+  }
+  private wikiKey(record: RecordItem) {
+    return `${record.masterId ?? 0}:${[...record.artistIds].sort((a, b) => a - b).join(",")}`;
+  }
+  requestRecord(id: string) {
+    const record = this.store.record(id);
+    if (!record) throw new AppError(404, "Plaat niet gevonden.");
+    this.queueDetails(record, 100);
+    if (this.config.wikiEnabled) void this.queueWiki(record, 90);
+  }
+  startBackground() {
+    if (this.closing || this.mode === "demo") return;
+    for (const record of this.store.records().filter((r) => r.available)) {
+      if (!this.store.detailsAt(record.id)) this.queueDetails(record, 0);
+      if (this.config.wikiEnabled) void this.queueWiki(record, 0);
+    }
+    this.refreshActive();
+  }
+  refreshActive() {
+    const state = this.state();
+    const record = state.activeSession?.record ?? state.selection?.record;
+    if (record) this.requestRecord(record.id);
+  }
+  private queueDetails(record: RecordItem, priority: number): Promise<void> {
+    if (record.demo || this.closing || !this.config.token)
+      return Promise.resolve();
+    const at = this.store.detailsAt(record.id);
+    if (
+      at &&
+      !stale(at, this.now(), priority > 0 ? REFRESH_INTERVAL : Infinity)
+    )
+      return Promise.resolve();
+    const key = `details:${record.releaseId}`;
+    if (this.store.get<number>("discogsDetailsRetryAfter", 0) > this.now())
+      return Promise.resolve();
+    if (this.store.get<number>(`backoff:${key}`, 0) > this.now())
+      return Promise.resolve();
+    return this.queue.enqueue(key, priority, async () => {
+      try {
+        const detail = await this.client.get(`/releases/${record.releaseId}`);
+        for (const current of this.store
+          .records()
+          .filter((r) => r.releaseId === record.releaseId))
+          this.store.put(enrich(current, detail), this.iso());
+        this.store.set(`backoff:${key}`, 0);
+      } catch {
+        this.store.set(`backoff:${key}`, this.now() + 15 * 60000);
+        this.store.set("discogsDetailsRetryAfter", this.now() + 15 * 60000);
+        this.queue.cancel("details:");
+        this.sync.error =
+          "Releasegegevens tijdelijk niet bereikbaar; later opnieuw.";
+      }
       this.emit();
     });
-    return this.enrichmentTask;
   }
-  private async runEnrichment(id?: string) {
-    try {
-      const records = this.store
-        .records()
-        .filter((r) => (id ? r.id === id : r.available));
-      let errors = 0;
-      for (let index = 0; index < records.length; index++) {
-        const record = records[index];
-        if (this.mode === "demo" || record.demo) continue;
-        const cached = record.albumInfo;
-        if (
-          !id &&
-          cached &&
-          Number.isFinite(Date.parse(cached.checkedAt)) &&
-          this.now() - Date.parse(cached.checkedAt) <
-            (cached.status === "error" ? 15 * 60000 : KNOWLEDGE_TTL)
-        )
-          continue;
-        this.enrichment.progress = `Albumbronnen ${index + 1} van ${records.length}`;
-        this.emit();
-        const albumInfo = await this.knowledge.lookup(record);
-        if (albumInfo.status === "error") errors++;
+  private queueWiki(record: RecordItem, priority: number): Promise<void> {
+    if (
+      record.demo ||
+      this.mode === "demo" ||
+      !this.config.wikiEnabled ||
+      this.closing
+    )
+      return Promise.resolve();
+    if (this.store.get<number>("wikiRetryAfter", 0) > this.now())
+      return Promise.resolve();
+    const cached = record.albumInfo;
+    const ttl = cached?.status === "error" ? 15 * 60000 : KNOWLEDGE_TTL;
+    if (
+      cached &&
+      Number.isFinite(Date.parse(cached.checkedAt)) &&
+      this.now() - Date.parse(cached.checkedAt) < ttl &&
+      cached.artists !== undefined
+    )
+      return Promise.resolve();
+    if (
+      cached &&
+      cached.status !== "ready" &&
+      this.now() - Date.parse(cached.checkedAt) < ttl
+    )
+      return Promise.resolve();
+    return this.queue.enqueue(
+      `wiki:${this.wikiKey(record)}`,
+      priority,
+      async () => {
         const current = this.store.record(record.id);
-        if (current) this.store.put({ ...current, albumInfo });
+        if (!current || !current.available) return;
+        const currentKey = this.wikiKey(current),
+          fresh = current.albumInfo;
+        if (
+          fresh &&
+          this.now() - Date.parse(fresh.checkedAt) <
+            (fresh.status === "error" ? 15 * 60000 : KNOWLEDGE_TTL) &&
+          (fresh.status !== "ready" || fresh.artists !== undefined)
+        )
+          return;
+        this.enrichment.running = true;
+        this.enrichment.progress = "Album- en artiestbronnen ophalen…";
         this.emit();
-      }
-      this.enrichment.progress = errors
-        ? "Een deel van de bronnen is tijdelijk niet bereikbaar."
-        : "Albumbronnen bijgewerkt";
-      this.enrichment.error = errors
-        ? "Wiki-bronnen tijdelijk niet bereikbaar. Kiezen en luisteren blijven werken."
-        : null;
-      if (!errors) this.enrichment.lastSuccess = this.iso();
-    } catch {
-      this.enrichment.error =
-        "Albuminformatie ophalen mislukt. Kiezen en luisteren blijven werken.";
-    }
+        const albumInfo = await this.knowledge.lookup(current);
+        if (albumInfo.status === "error") {
+          this.store.set("wikiRetryAfter", this.now() + 15 * 60000);
+          this.queue.cancel("wiki:");
+        }
+        for (const target of this.store
+          .records()
+          .filter((r) => this.wikiKey(r) === currentKey))
+          this.store.put({ ...target, albumInfo });
+        this.enrichment.running = false;
+        this.enrichment.error =
+          albumInfo.status === "error"
+            ? "Wiki-bronnen tijdelijk niet bereikbaar."
+            : null;
+        this.enrichment.progress =
+          albumInfo.status === "error"
+            ? "Bronnen later opnieuw proberen"
+            : "Album- en artiestbronnen bijgewerkt";
+        if (albumInfo.status !== "error")
+          this.enrichment.lastSuccess = this.iso();
+        this.store.set("enrichment", this.enrichment);
+        this.emit();
+      },
+    );
+  }
+  async enrichRecords(id?: string) {
+    this.ensureWikiEnabled();
+    if (id) {
+      const record = this.store.record(id);
+      if (!record) throw new AppError(404, "Plaat niet gevonden.");
+      await this.queueWiki(record, 90);
+    } else
+      await Promise.all(
+        this.store
+          .records()
+          .filter((r) => r.available)
+          .map((r) => this.queueWiki(r, 0)),
+      );
+  }
+  waitForBackground() {
+    return this.queue.idle();
   }
   async close() {
+    this.closing = true;
+    await this.queue.close();
     await this.syncTask;
-    await this.enrichmentTask;
     this.store.close();
   }
 }

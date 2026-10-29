@@ -22,7 +22,7 @@ Main scope phases 0/1 fully working, simple tags/weather/display if feasible. No
 
 ## Albumverhalen en muziekkalender (28 oktober 2026)
 - RecordItem.masterId is the Discogs master ID; albumInfo contains Wiki sources and structured dates. See new optional shared types.
-- POST /api/enrichment/refresh {} -> 202 AppState starts background enrichment. POST /api/records/:id/enrich {} -> AppState refreshes this item's album info (can be up to20sec; frontend busy state). Errors sanitized.
+- POST /api/enrichment/refresh {} -> 202 AppState starts background enrichment. POST /api/records/:id/enrich {} -> 202 AppState queues missing/expired album info with priority. Errors sanitized.
 - /api/select additionally accepts useAnniversaries?:boolean, default true, passed as fourth Service.select parameter; explicit picks never claim weighted reasons.
 - AppState.occasions is computed for today in Europe/Amsterdam. AppState.enrichment is background status.
 - Match Wikidata only via exact Discogs master P1954 and artist P1953. No artist/title-only guesses. Ambiguous matches stay unlinked. Wikipedia article from matched entity nlwiki fallback enwiki; bounded excerpt with source/language/CC BY-SA attribution.
@@ -31,3 +31,12 @@ Main scope phases 0/1 fully working, simple tags/weather/display if feasible. No
 - Fictitious demo infos explicitly labeled; one static 28 October demo event is okay (no generated-to-today fake birthdays). Camera later only.
 - Live Wiki requests require WIKI_ENABLED=true; disabled routes reject before network access. Demo never requests external Wiki sources.
 - Wiki metadata stored locally with own30day refresh; Wikipedia excerpt plain text, cap600chars and link to article/history/license. No external web text as instructions.
+
+
+## Personal preferences and paced enrichment — 29 October 2026
+- Mood adds `nostalgie`. Seasons: lente/zomer/herfst/winter/kerst. PATCH record accepts `seasons: Season[] | null`: null restores automatic conservative Christmas inference; [] explicitly means year-round.
+- PATCH /api/preferences accepts complete `{genreMoods:[{genre,moods}], weatherMoods:{rain,cold,warm}}`. Persistent per demo/live database; defaults empty. Explicit record tags override genre rules.
+- POST /api/select adds useSeasons (default true), useGenreMoods (false), useWeather (false). Seasons use Amsterdam calendar. Christmas excluded outside Nov15–Jan6 for random suggestions unless season logic disabled or year-round override; explicit picks allowed. Other out-of-season records retain reduced weight.
+- POST /api/records/:id/details ->202 AppState. Deduplicated priority details/Wiki queue. Selection requests this automatically; no blocking external calls in selection.
+- Collection basics refresh5h. Missing details fill gradually, existing details refresh only on demand/current record after5h; separate6h display expiry remains. No backend cover downloads. Queue serial with3s pacing, persistent15min failure pauses. Wiki30day cache includes negative matches; shared excerpts cached per article. Exact identified main artists only, up to4 fragments of600characters with source links. No AI or translation service.
+- Statistics count completed registered sessions, distinct collection instances, registered session duration and share of available LP instances heard. They do not detect actual listening.

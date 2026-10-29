@@ -53,6 +53,7 @@ export function basicRecord(
     credits: old?.credits ?? [],
     notes: old?.notes ?? "",
     tags: old?.tags ?? [],
+    seasons: old?.seasons,
     excluded: old?.excluded ?? false,
     available: true,
     isLP: isLP(b.formats),
@@ -68,6 +69,12 @@ export function enrich(record: RecordItem, detail: AnyData): RecordItem {
       Number.isSafeInteger(detail.master_id) && detail.master_id > 0
         ? detail.master_id
         : record.masterId,
+    albumInfo:
+      Number.isSafeInteger(detail.master_id) &&
+      detail.master_id > 0 &&
+      detail.master_id !== record.masterId
+        ? undefined
+        : record.albumInfo,
     country: detail.country ?? "",
     tracks: (detail.tracklist ?? [])
       .filter((t: AnyData) => t.type_ !== "heading")
@@ -88,13 +95,22 @@ export function enrich(record: RecordItem, detail: AnyData): RecordItem {
   };
 }
 export class DiscogsClient {
+  private chain: Promise<void> = Promise.resolve();
   constructor(
     private token: string,
     private fetcher: typeof fetch = fetch,
     private wait: (ms: number) => Promise<void> = (ms) =>
       new Promise((r) => setTimeout(r, ms)),
   ) {}
-  async get(path: string): Promise<AnyData> {
+  get(path: string): Promise<AnyData> {
+    const result = this.chain.then(() => this.request(path));
+    this.chain = result.then(
+      () => undefined,
+      () => undefined,
+    );
+    return result;
+  }
+  private async request(path: string): Promise<AnyData> {
     for (let attempt = 0; attempt < 3; attempt++) {
       const response = await this.fetcher(`https://api.discogs.com${path}`, {
         headers: {

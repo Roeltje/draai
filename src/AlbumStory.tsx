@@ -153,6 +153,82 @@ export function AlbumStory({
           )}
         </div>
       )}
+      {!!info?.artists?.some((artist) => artist.summary) && (
+        <div className="artist-stories">
+          <h3>De mensen achter de muziek</h3>
+          {info.artists
+            .filter(
+              (artist, index, all) =>
+                artist.summary &&
+                all.findIndex((other) => other.artistId === artist.artistId) ===
+                  index,
+            )
+            .map((artist) => (
+              <details key={artist.artistId} className="artist-story">
+                <summary>{artist.name}</summary>
+                <p className="story-summary">{artist.summary}</p>
+                {isDemo ? (
+                  <p className="story-note">
+                    Fictief artiestverhaal voor de voorbeeldcollectie.
+                  </p>
+                ) : (
+                  <div className="wiki-sources">
+                    {artist.wikipediaUrl && (
+                      <a
+                        href={artist.wikipediaUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Wikipedia ·{" "}
+                        {artist.language === "nl"
+                          ? "Nederlands"
+                          : artist.language === "en"
+                            ? "Engels"
+                            : artist.language || "artikel"}{" "}
+                        <ArrowUpRight size={12} />
+                      </a>
+                    )}
+                    {artist.wikidataUrl && (
+                      <a
+                        href={artist.wikidataUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Wikidata · artiest <ArrowUpRight size={12} />
+                      </a>
+                    )}
+                    {artist.wikipediaUrl && (
+                      <span>
+                        Ingekort fragment uit Wikipedia ·{" "}
+                        <a
+                          href={historyUrl(artist.wikipediaUrl)}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Auteurs en bewerkingsgeschiedenis
+                        </a>{" "}
+                        ·{" "}
+                        <a
+                          href="https://creativecommons.org/licenses/by-sa/4.0/"
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          CC BY-SA 4.0
+                        </a>
+                      </span>
+                    )}
+                    {artist.checkedAt && (
+                      <span>
+                        Gecontroleerd op{" "}
+                        {musicDate(artist.checkedAt.slice(0, 10))}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </details>
+            ))}
+        </div>
+      )}
       {needsWikiSetup && (
         <p className="story-note">
           De Wiki-koppeling is nog niet ingeschakeld. Bekijk bij Instellingen

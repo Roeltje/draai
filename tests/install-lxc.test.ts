@@ -173,3 +173,12 @@ test("installer rejects a failed runtime checksum before installing any runtime 
     assert.equal(existsSync(marker), false);
   });
 });
+
+test("installer accepts Ubuntu 24.04 and 26.04 but rejects other releases", () => {
+  assert.equal(
+    shell("supports_ubuntu ubuntu 24.04; supports_ubuntu ubuntu 26.04").status,
+    0,
+  );
+  assert.notEqual(shell("supports_ubuntu ubuntu 25.10").status, 0);
+  assert.notEqual(shell("supports_ubuntu debian 26.04").status, 0);
+});
