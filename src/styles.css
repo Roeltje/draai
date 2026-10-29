@@ -3135,3 +3135,503 @@ h2 {
     flex: 1;
   }
 }
+
+.headline-star {
+  width: 1em;
+  height: 1em;
+  display: block;
+}
+.mood-chip > span > svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+.empty-star {
+  display: block;
+  width: 33px;
+  height: 33px;
+  color: var(--coral);
+  flex-shrink: 0;
+}
+.collection-end > .empty-star {
+  margin: auto;
+}
+.choice-options {
+  width: 100%;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+.choice-options > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 11px;
+  min-height: 34px;
+  width: fit-content;
+}
+.choice-options > summary::-webkit-details-marker {
+  display: none;
+}
+.choice-options[open] > summary svg {
+  transform: rotate(180deg);
+}
+.choice-options-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 30px;
+  padding: 18px 0 5px;
+}
+.choice-options .anniversary-toggle {
+  min-width: 0;
+  align-items: flex-start;
+  line-height: 1.6;
+  padding-top: 0;
+}
+.choice-options .anniversary-toggle input {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+.choice-options .anniversary-toggle svg {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+.choice-options .anniversary-toggle small {
+  line-height: 1.8;
+  max-width: 420px;
+}
+.choice-options .text-link {
+  font-size: 10px;
+  width: fit-content;
+}
+.mood-options {
+  flex-wrap: wrap;
+}
+.mood-section > .weather-option {
+  position: static;
+  border-left: 0;
+  padding-left: 0;
+  margin-left: 0;
+  width: 100%;
+}
+.detail-refresh-status {
+  font-size: 10px;
+  line-height: 1.8;
+  color: var(--muted);
+  padding: 13px 16px;
+  background: #eae6da;
+  margin: 19px 0;
+}
+.season-editor {
+  border-top: 1px solid var(--line);
+  padding-top: 17px;
+  margin-top: 18px;
+}
+.season-editor > .eyebrow {
+  font-size: 8px;
+}
+.season-editor > p {
+  font-size: 9px;
+  line-height: 1.8;
+  color: var(--muted);
+  margin: 10px 0;
+}
+.season-reset {
+  font-size: 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: none;
+  padding: 8px 0;
+  min-height: 34px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.season-tags button {
+  font-size: 9px;
+}
+.listening-stats {
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 25px 0;
+  margin-bottom: 35px;
+}
+.stats-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.stats-heading .eyebrow {
+  font-size: 8px;
+  color: var(--muted);
+}
+.stats-heading > p {
+  font-family: var(--serif);
+  font-size: 22px;
+  margin: 0;
+}
+.stats-values {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 30px;
+  margin: 27px 0 20px;
+}
+.stats-values > div {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--line);
+  padding-right: 20px;
+}
+.stats-values > div:last-child {
+  border: 0;
+}
+.stats-values dt {
+  font-size: 10px;
+  line-height: 1.7;
+  color: var(--muted);
+  order: 1;
+}
+.stats-values dd {
+  font-family: var(--serif);
+  font-size: 48px;
+  line-height: 1.2;
+  letter-spacing: -1px;
+  margin: 0 0 9px;
+}
+.stats-values dd.stats-duration {
+  font-size: 34px;
+  line-height: 1.7;
+  white-space: nowrap;
+}
+.stats-values span {
+  font-size: 8px;
+  color: var(--muted);
+  margin-top: 7px;
+  order: 2;
+  line-height: 1.7;
+}
+.stats-note {
+  font-size: 9px;
+  line-height: 1.9;
+  color: var(--muted);
+  max-width: 850px;
+  margin-bottom: 0;
+}
+.preference-settings {
+  grid-column: 1/-1;
+}
+.preference-section {
+  border-top: 1px solid var(--line);
+  margin-top: 22px;
+  padding-top: 5px;
+}
+.preference-section > summary {
+  font-size: 15px;
+  cursor: pointer;
+  padding: 17px 0;
+  list-style: revert;
+}
+.preference-hint {
+  font-size: 11px;
+  line-height: 1.9;
+  color: var(--muted);
+  max-width: 750px;
+  margin: 3px 0 18px;
+}
+.genre-rule {
+  border-top: 1px solid var(--line);
+  padding: 18px 0;
+}
+.genre-rule > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-bottom: 11px;
+}
+.genre-rule strong,
+.weather-rule strong {
+  font-weight: 500;
+}
+.genre-rule > div:first-child > button {
+  border: 0;
+  background: none;
+  padding: 9px;
+  display: flex;
+}
+.preference-moods {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.preference-moods button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 37px;
+  padding: 8px 13px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: transparent;
+  font-size: 10px;
+}
+.preference-moods button.selected {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.add-genre {
+  display: flex;
+  gap: 12px;
+  margin: 20px 0;
+}
+.add-genre input {
+  padding: 13px 15px;
+  font-size: 11px;
+  max-width: 340px;
+  min-width: 0;
+  width: 100%;
+  border: 1px solid var(--line);
+  background: #eae6da;
+  color: var(--ink);
+  border-radius: 0;
+}
+.add-genre > button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: none;
+  border: 1px solid var(--line);
+  padding: 12px 15px;
+  font-size: 10px;
+}
+.weather-rule {
+  display: grid;
+  grid-template-columns: 115px 1fr;
+  gap: 20px;
+  align-items: center;
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+}
+.weather-rule > strong {
+  font-size: 12px;
+}
+.preference-save {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin: 24px 0 0;
+}
+.preference-save > .button {
+  font-size: 11px;
+  min-height: 48px;
+}
+.preference-save > span {
+  font-size: 10px;
+  color: var(--muted);
+}
+.artist-stories {
+  margin: 24px 0;
+}
+.artist-stories > h3 {
+  font-family: var(--serif);
+  font-size: 25px;
+  font-weight: 400;
+  letter-spacing: -0.4px;
+  margin: 0 0 15px;
+}
+.artist-story {
+  border-top: 1px solid var(--line);
+}
+.artist-story > summary {
+  font-size: 13px;
+  line-height: 1.7;
+  padding: 15px 0;
+  cursor: pointer;
+}
+.artist-story .story-summary {
+  margin-top: 5px;
+}
+@media (max-width: 800px) {
+  .stats-values {
+    gap: 20px;
+  }
+  .stats-values dd {
+    font-size: 42px;
+  }
+  .stats-values dd.stats-duration {
+    font-size: 27px;
+    line-height: 1.9;
+  }
+  .stats-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+@media (max-width: 600px) {
+  .choice-options {
+    margin-top: 19px;
+    padding-top: 13px;
+  }
+  .choice-options > summary {
+    font-size: 10px;
+    width: 100%;
+    min-height: 39px;
+  }
+  .choice-options-body {
+    grid-template-columns: 1fr;
+    gap: 21px;
+    padding: 18px 0 4px;
+  }
+  .choice-options .anniversary-toggle {
+    font-size: 10px;
+    width: 100%;
+    gap: 9px;
+  }
+  .choice-options .anniversary-toggle > span {
+    flex: 1;
+  }
+  .choice-options .anniversary-toggle small {
+    font-size: 8px;
+    max-width: none;
+  }
+  .mood-section > .weather-option {
+    border-top: 1px solid var(--line);
+    padding-top: 18px;
+    margin-top: 19px;
+  }
+  .detail-refresh-status {
+    font-size: 9px;
+    padding: 12px 14px;
+  }
+  .season-editor {
+    padding-top: 15px;
+    margin-top: 15px;
+  }
+  .season-editor > .eyebrow {
+    font-size: 6px;
+    letter-spacing: 0.9px;
+  }
+  .season-editor > p {
+    font-size: 8px;
+    line-height: 1.8;
+  }
+  .season-tags button {
+    font-size: 8px;
+    min-height: 34px;
+  }
+  .season-reset {
+    font-size: 8px;
+    min-height: 38px;
+    line-height: 1.6;
+    text-align: left;
+  }
+  .listening-stats {
+    padding: 22px 0;
+    margin-bottom: 26px;
+  }
+  .stats-heading .eyebrow {
+    font-size: 7px;
+  }
+  .stats-heading > p {
+    font-size: 24px;
+  }
+  .stats-values {
+    grid-template-columns: 1fr 1fr;
+    gap: 25px 20px;
+    margin: 24px 0;
+  }
+  .stats-values > div {
+    padding-right: 10px;
+  }
+  .stats-values > div:nth-child(2) {
+    border: 0;
+  }
+  .stats-values dd {
+    font-size: 43px;
+    margin-bottom: 6px;
+  }
+  .stats-values dd.stats-duration {
+    font-size: 28px;
+    line-height: 1.8;
+    white-space: normal;
+  }
+  .stats-values dt {
+    font-size: 9px;
+  }
+  .stats-values span {
+    font-size: 7px;
+    line-height: 1.8;
+  }
+  .stats-note {
+    font-size: 8px;
+  }
+  .preference-hint {
+    font-size: 10px;
+    line-height: 1.9;
+  }
+  .preference-section > summary {
+    font-size: 14px;
+    line-height: 1.7;
+  }
+  .preference-moods {
+    gap: 6px;
+  }
+  .preference-moods button {
+    font-size: 9px;
+    padding: 9px 11px;
+    min-height: 38px;
+  }
+  .genre-rule > div:first-child {
+    font-size: 11px;
+  }
+  .add-genre {
+    gap: 8px;
+  }
+  .add-genre input {
+    font-size: 10px;
+    padding: 12px;
+    max-width: none;
+  }
+  .add-genre > button {
+    font-size: 9px;
+    padding: 10px;
+    flex-shrink: 0;
+  }
+  .weather-rule {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 19px 0;
+  }
+  .weather-rule > strong {
+    font-size: 11px;
+  }
+  .preference-save {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .preference-save > .button {
+    width: 100%;
+  }
+  .preference-save > span {
+    font-size: 9px;
+  }
+  .artist-stories > h3 {
+    font-size: 24px;
+  }
+  .artist-story > summary {
+    font-size: 12px;
+    padding: 16px 0;
+  }
+  .empty-star {
+    width: 30px;
+    height: 30px;
+  }
+}

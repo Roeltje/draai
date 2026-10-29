@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run inside a dedicated, unprivileged Ubuntu 24.04 LXC. Never run on the host.
+# Run inside a dedicated, unprivileged Ubuntu 24.04/26.04 LXC. Never run on the host.
 set -Eeuo pipefail
 
 DRAAI_REPO='https://github.com/Roeltje/draai.git'
@@ -11,7 +11,7 @@ DRAAI_PUBLISHED=0
 
 usage() {
   cat <<'HELP'
-Draai — eerste installatie in een ongeprivilegieerde Ubuntu 24.04 LXC
+Draai — eerste installatie in een ongeprivilegieerde Ubuntu 24.04/26.04 LXC
 
 sudo bash scripts/install-lxc.sh --source "$PWD" --origin http://192.168.1.50:3210
 sudo bash scripts/install-lxc.sh --repo git@github.com:Roeltje/draai.git --origin http://192.168.1.50:3210
@@ -69,14 +69,16 @@ validate_repo() {
   [[ "$1" =~ ^https://[a-zA-Z0-9.-]+/[-a-zA-Z0-9_./]+$ || "$1" =~ ^git@[a-zA-Z0-9.-]+:[-a-zA-Z0-9_./]+$ || "$1" =~ ^ssh://git@[a-zA-Z0-9.-]+/[-a-zA-Z0-9_./]+$ ]] || fail 'Gebruik een HTTPS- of SSH-Git-URL zonder token, wachtwoord of query.'
 }
 
+supports_ubuntu() { [[ "$1" == ubuntu && ( "$2" == 24.04 || "$2" == 26.04 ) ]]; }
+
 check_environment() {
   [[ $(uname -s) == Linux ]] || fail 'Alleen Linux wordt ondersteund; voer dit uit IN de LXC.'
   [[ ${EUID:-$(id -u)} == 0 ]] || fail 'Voer uit als root binnen de LXC (bijvoorbeeld met sudo).'
   [[ ! -e /etc/pve ]] && ! command -v pveversion >/dev/null 2>&1 || fail 'Proxmox-host gedetecteerd. Stop: voer dit uitsluitend IN de LXC uit.'
-  [[ -r /etc/os-release ]] || fail 'Ubuntu 24.04 is vereist.'
+  [[ -r /etc/os-release ]] || fail 'Ubuntu 24.04 of 26.04 is vereist.'
   # shellcheck disable=SC1091
   . /etc/os-release
-  [[ ${ID:-} == ubuntu && ${VERSION_ID:-} == 24.04 ]] || fail 'Deze installer ondersteunt alleen Ubuntu 24.04 LTS.'
+  supports_ubuntu "${ID:-}" "${VERSION_ID:-}" || fail 'Deze installer ondersteunt Ubuntu 24.04 en 26.04.'
   [[ -d /run/systemd/system ]] && command -v systemctl >/dev/null || fail 'Een actieve systemd-installatie is vereist.'
   [[ $(systemd-detect-virt --container 2>/dev/null || true) == lxc ]] || fail 'Geen LXC gedetecteerd. Gebruik een dedicated Ubuntu LXC.'
   awk '$1 == 0 && $2 != 0 { found=1 } END { exit !found }' /proc/self/uid_map || fail 'Deze LXC lijkt geprivilegieerd; maak een ongeprivilegieerde LXC.'

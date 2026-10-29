@@ -2,7 +2,8 @@ import Fastify from "fastify";
 import fastifyStatic from "@fastify/static";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
-import type { Mood } from "../shared/types.ts";
+import type { Mood, Season, SelectionPreferences } from "../shared/types.ts";
+import { MOODS, SEASONS } from "../shared/selection.ts";
 import {
   AppError,
   Service,
@@ -11,7 +12,52 @@ import {
 } from "./service.ts";
 import { REFRESH_INTERVAL } from "./discogs.ts";
 
-const moods: Mood[] = ["alles", "rust", "warm", "energie", "avontuur"];
+const moods = MOODS;
+function validatePreferences(
+  value: Record<string, unknown>,
+): SelectionPreferences {
+  const validMoods = (v: unknown) =>
+    Array.isArray(v) &&
+    v.length <= 5 &&
+    v.every((m) => moods.includes(m) && m !== "alles") &&
+    new Set(v).size === v.length;
+  const weather = value.weatherMoods as Record<string, unknown> | undefined;
+  if (
+    Object.keys(value).some(
+      (k) => !["genreMoods", "weatherMoods"].includes(k),
+    ) ||
+    !Array.isArray(value.genreMoods) ||
+    value.genreMoods.length > 100 ||
+    !value.genreMoods.every(
+      (g: any) =>
+        g &&
+        typeof g.genre === "string" &&
+        g.genre.trim().length > 0 &&
+        g.genre.length <= 100 &&
+        Object.keys(g).every((k) => ["genre", "moods"].includes(k)) &&
+        validMoods(g.moods),
+    ) ||
+    !weather ||
+    typeof weather !== "object" ||
+    Array.isArray(weather) ||
+    Object.keys(weather).some((k) => !["rain", "cold", "warm"].includes(k)) ||
+    !["rain", "cold", "warm"].every((k) => validMoods(weather[k]))
+  )
+    throw new AppError(400, "Ongeldige genre- of weervoorkeuren.");
+  const normalized = {
+    genreMoods: value.genreMoods.map((g: any) => ({
+      genre: g.genre.trim(),
+      moods: g.moods,
+    })),
+    weatherMoods: weather,
+  } as SelectionPreferences;
+  if (
+    new Set(normalized.genreMoods.map((g) => g.genre.toLocaleLowerCase()))
+      .size !== normalized.genreMoods.length
+  )
+    throw new AppError(400, "Gebruik elk genre maar één keer.");
+  return normalized;
+}
 const objectBody = (body: unknown): Record<string, unknown> => {
   if (!body || typeof body !== "object" || Array.isArray(body))
     throw new AppError(400, "Ongeldige aanvraag.");
@@ -75,7 +121,9 @@ export async function buildApp(
       (b.mood !== undefined && !moods.includes(b.mood as Mood)) ||
       (b.useWeather !== undefined && typeof b.useWeather !== "boolean") ||
       (b.useAnniversaries !== undefined &&
-        typeof b.useAnniversaries !== "boolean")
+        typeof b.useAnniversaries !== "boolean") ||
+      (b.useSeasons !== undefined && typeof b.useSeasons !== "boolean") ||
+      (b.useGenreMoods !== undefined && typeof b.useGenreMoods !== "boolean")
     )
       throw new AppError(400, "Ongeldige stemming of weerkeuze.");
     service.select(
@@ -83,6 +131,8 @@ export async function buildApp(
       b.useWeather as boolean | undefined,
       b.recordId === undefined ? undefined : requiredString(b.recordId),
       b.useAnniversaries as boolean | undefined,
+      b.useSeasons as boolean | undefined,
+      b.useGenreMoods as boolean | undefined,
     );
     return service.state();
   });
@@ -103,18 +153,29 @@ export async function buildApp(
   app.patch<{ Params: { id: string } }>("/api/records/:id", async (request) => {
     const b = objectBody(request.body);
     if (
-      Object.keys(b).some((k) => !["tags", "excluded"].includes(k)) ||
+      Object.keys(b).some(
+        (k) => !["tags", "excluded", "seasons"].includes(k),
+      ) ||
       (b.tags !== undefined &&
         (!Array.isArray(b.tags) ||
-          b.tags.length > 4 ||
+          b.tags.length > 5 ||
           b.tags.some((v) => !moods.includes(v) || v === "alles"))) ||
-      (b.excluded !== undefined && typeof b.excluded !== "boolean")
+      (b.excluded !== undefined && typeof b.excluded !== "boolean") ||
+      (b.seasons !== undefined &&
+        b.seasons !== null &&
+        (!Array.isArray(b.seasons) ||
+          b.seasons.length > 5 ||
+          b.seasons.some((s) => !SEASONS.includes(s))))
     )
       throw new AppError(400, "Ongeldige labels of uitsluiting.");
     service.patch(
       request.params.id,
-      b as { tags?: Mood[]; excluded?: boolean },
+      b as { tags?: Mood[]; excluded?: boolean; seasons?: Season[] | null },
     );
+    return service.state();
+  });
+  app.patch("/api/preferences", async (request) => {
+    service.setPreferences(validatePreferences(objectBody(request.body)));
     return service.state();
   });
   app.post("/api/sync", async (_request, reply) => {
@@ -139,8 +200,20 @@ export async function buildApp(
   });
   app.post<{ Params: { id: string } }>(
     "/api/records/:id/enrich",
-    async (request) => {
-      await service.enrichRecords(request.params.id);
+    async (request, reply) => {
+      service.ensureWikiEnabled();
+      if (!service.store.record(request.params.id))
+        throw new AppError(404, "Plaat niet gevonden.");
+      void service.enrichRecords(request.params.id);
+      reply.code(202);
+      return service.state();
+    },
+  );
+  app.post<{ Params: { id: string } }>(
+    "/api/records/:id/details",
+    async (request, reply) => {
+      service.requestRecord(request.params.id);
+      reply.code(202);
       return service.state();
     },
   );
@@ -186,7 +259,7 @@ export async function buildApp(
   const timers: NodeJS.Timeout[] = [];
   if (options.schedule !== false) {
     const syncTimer = setInterval(() => {
-      if (config.token) void service.synchronize(true);
+      if (config.token) void service.synchronize();
     }, REFRESH_INTERVAL);
     syncTimer.unref();
     timers.push(syncTimer);
@@ -200,6 +273,10 @@ export async function buildApp(
       void service.refreshWeather();
     }
     if (config.token) void service.synchronize();
+    service.startBackground();
+    const currentTimer = setInterval(() => service.refreshActive(), 60000);
+    currentTimer.unref();
+    timers.push(currentTimer);
   }
   app.addHook("preClose", async () => {
     streams.forEach((stream) => stream.end());

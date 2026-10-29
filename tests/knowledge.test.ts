@@ -56,6 +56,7 @@ const info = (dates: AlbumInfo["dates"]): AlbumInfo => ({
   language: "",
   checkedAt: new Date(now).toISOString(),
   dates,
+  artists: [],
 });
 const date = (
   kind: "release" | "birth" | "death",
@@ -274,6 +275,49 @@ test("English article fallback and excerpt outages preserve verified structured 
   assert.equal(result.dates.length, 3);
 });
 
+test("artist excerpts use only exact Discogs artist entities, remain bounded and reuse a30day cache", async () => {
+  const data = fixture();
+  data.entities.Q200.sitelinks = { enwiki: { title: "Example Musician" } };
+  let artistCalls = 0;
+  let at = now;
+  const values = new Map<string, unknown>();
+  const cache = {
+    get<T>(key: string, fallback: T): T {
+      return values.has(key) ? (values.get(key) as T) : fallback;
+    },
+    set(key: string, value: unknown) {
+      values.set(key, value);
+    },
+  };
+  const client = new KnowledgeClient(
+    fetcher((url) => {
+      if (url.hostname === "query.wikidata.org") return response(matches());
+      if (url.hostname === "www.wikidata.org") return response(data);
+      if (url.searchParams.get("titles") === "Example Musician") {
+        artistCalls++;
+        return response({
+          query: { pages: [{ extract: "Artist biography. ".repeat(100) }] },
+        });
+      }
+      return response({ query: { pages: [{ extract: "Album." }] } });
+    }),
+    noWait,
+    () => at,
+    cache,
+  );
+  const first = await client.lookup(record());
+  assert.equal(first.artists!.length, 1);
+  assert.equal(first.artists![0].artistId, 42);
+  assert.equal(first.artists![0].summary.length, 600);
+  assert.equal(first.artists![0].language, "en");
+  assert.match(first.artists![0].wikidataUrl, /Q200$/);
+  await client.lookup(record());
+  assert.equal(artistCalls, 1);
+  at += KNOWLEDGE_TTL + 1;
+  await client.lookup(record());
+  assert.equal(artistCalls, 2);
+});
+
 test("Amsterdam calendar uses local day, truthful labels, exact leap day and no negative ages", () => {
   const r = {
     ...record(),
@@ -432,10 +476,11 @@ test("upstream outages are isolated and enrichment has a single job lock", async
     service.store.put(record());
     const job = service.enrichRecords();
     const same = service.enrichRecords();
+    await new Promise((r) => setTimeout(r, 5));
     assert.equal(calls, 1);
-    await assert.rejects(service.enrichRecords(record().id), /loopt al/);
+    const priority = service.enrichRecords(record().id);
     release();
-    await Promise.all([job, same]);
+    await Promise.all([job, same, priority]);
     assert.equal(calls, 2);
     assert.equal(service.state().enrichment!.running, false);
     assert.equal(service.state().records[0].albumInfo!.status, "error");
@@ -470,7 +515,7 @@ test("HTTP enrichment routes return state, protect job scope and validate annive
       url: "/api/records/demo-1/enrich",
       payload: {},
     });
-    assert.equal(single.statusCode, 200);
+    assert.equal(single.statusCode, 202);
     assert.equal(single.json().records[0].albumInfo.demo, true);
     assert.equal(
       (

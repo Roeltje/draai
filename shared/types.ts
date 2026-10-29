@@ -1,4 +1,10 @@
-export type Mood = "alles" | "rust" | "warm" | "energie" | "avontuur";
+export type Mood =
+  "alles" | "rust" | "warm" | "energie" | "avontuur" | "nostalgie";
+export type Season = "lente" | "zomer" | "herfst" | "winter" | "kerst";
+export interface SelectionPreferences {
+  genreMoods: Array<{ genre: string; moods: Mood[] }>;
+  weatherMoods: { rain: Mood[]; cold: Mood[]; warm: Mood[] };
+}
 export interface Track {
   position: string;
   title: string;
@@ -25,6 +31,15 @@ export interface AlbumInfo {
   checkedAt: string;
   dates: MusicDate[];
   demo?: boolean;
+  artists?: Array<{
+    artistId: number;
+    name: string;
+    summary: string;
+    wikipediaUrl: string;
+    wikidataUrl: string;
+    language: string;
+    checkedAt: string;
+  }>;
 }
 export interface Occasion {
   recordId: string;
@@ -56,6 +71,7 @@ export interface RecordItem {
   credits: Credit[];
   notes: string;
   tags: Mood[];
+  seasons?: Season[];
   excluded: boolean;
   available: boolean;
   isLP: boolean;
@@ -100,6 +116,7 @@ export interface AppState {
   history: ListeningSession[];
   sync: SyncState;
   weather: WeatherState;
+  preferences?: SelectionPreferences;
   occasions?: Occasion[];
   enrichment?: {
     running: boolean;

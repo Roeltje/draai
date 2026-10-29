@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   ArrowUpRight,
@@ -29,6 +29,11 @@ import QRCode from "qrcode";
 import type { AppState, RecordItem, Mood } from "../shared/types";
 import "./styles.css";
 import { AlbumStory } from "./AlbumStory";
+import { BrandStar } from "./BrandStar";
+import { SeasonEditor } from "./SeasonEditor";
+import { ListeningStats } from "./ListeningStatsPanel";
+import { formatRegisteredDuration } from "./listeningStats";
+import { PreferencesEditor } from "./PreferencesEditor";
 import { protectState, nextExpiry, recordExpired } from "./freshness";
 
 type Page =
@@ -45,6 +50,7 @@ const moods: { id: Mood; label: string; hint: string }[] = [
   { id: "warm", label: "Warm", hint: "Voor de gezelligheid" },
   { id: "energie", label: "Energiek", hint: "Een beetje vaart" },
   { id: "avontuur", label: "Avontuurlijk", hint: "Buiten de lijntjes" },
+  { id: "nostalgie", label: "Nostalgisch", hint: "Even terug in de tijd" },
 ];
 const stamp = (v: string | null) =>
   v
@@ -64,9 +70,11 @@ const day = (v: string) =>
 function Cover({
   record,
   className = "",
+  priority = false,
 }: {
   record: RecordItem;
   className?: string;
+  priority?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
   useEffect(() => setFailed(false), [record.coverUrl]);
@@ -74,6 +82,9 @@ function Cover({
     <img
       className={`cover ${className}`}
       src={record.coverUrl}
+      loading={priority ? "eager" : "lazy"}
+      decoding="async"
+      fetchPriority={priority ? "high" : "auto"}
       alt={`Hoes van ${record.title}`}
       onError={() => setFailed(true)}
     />
@@ -115,6 +126,11 @@ function App() {
     [toast, setToast] = useState(""),
     [qr, setQr] = useState("");
   const [useAnniversaries, setUseAnniversaries] = useState(true);
+  const [useSeasons, setUseSeasons] = useState(true),
+    [useWeather, setUseWeather] = useState(false),
+    [useGenreMoods, setUseGenreMoods] = useState(false);
+  const detailAttempts = useRef(new Map<string, number>());
+  const [detailError, setDetailError] = useState("");
   const [clock, setClock] = useState(0);
   const state = protectState(rawState);
   useEffect(() => {
@@ -126,6 +142,73 @@ function App() {
     );
     return () => clearTimeout(timer);
   }, [rawState, clock]);
+  const visibleRecord =
+    page === "suggestion"
+      ? rawState?.selection?.record
+      : page === "listening"
+        ? rawState?.activeSession?.record
+        : undefined;
+  const detailsExpired =
+    !!visibleRecord &&
+    !visibleRecord.demo &&
+    (!visibleRecord.detailsFetchedAt ||
+      !Number.isFinite(Date.parse(visibleRecord.detailsFetchedAt)) ||
+      Date.now() - Date.parse(visibleRecord.detailsFetchedAt) >=
+        6 * 60 * 60 * 1000);
+  useEffect(() => {
+    if (
+      !visibleRecord ||
+      !detailsExpired ||
+      offline ||
+      recordExpired(visibleRecord)
+    )
+      return;
+    const signature = `${visibleRecord.id}:${visibleRecord.detailsFetchedAt || "none"}`;
+    const last = detailAttempts.current.get(signature) || 0;
+    if (Date.now() - last < 120000) return;
+    detailAttempts.current.set(signature, Date.now());
+    setDetailError("");
+    let cancelled = false;
+    void fetch(`/api/records/${encodeURIComponent(visibleRecord.id)}/details`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          const data = await response.json();
+          throw Error(
+            data.error || "Persingsdetails konden niet worden bijgewerkt.",
+          );
+        }
+      })
+      .catch((error) => {
+        if (!cancelled)
+          setDetailError(
+            error instanceof Error
+              ? error.message
+              : "Persingsdetails worden later opnieuw geprobeerd.",
+          );
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    visibleRecord?.id,
+    visibleRecord?.detailsFetchedAt,
+    visibleRecord?.fetchedAt,
+    detailsExpired,
+    offline,
+    clock,
+  ]);
+  const detailNotice = detailsExpired ? (
+    <p className="detail-refresh-status" role="status">
+      {offline
+        ? "Actuele persingsdetails verschijnen zodra er weer verbinding is."
+        : detailError ||
+          "Tracks en credits worden op de achtergrond bijgewerkt."}
+    </p>
+  ) : null;
   const go = (p: Page) => {
     setPage(p);
     window.history.pushState({}, "", p === "home" ? "/" : `/${p}`);
@@ -252,6 +335,9 @@ function App() {
       await mutate("/api/select", {
         mood,
         useAnniversaries,
+        useWeather,
+        useSeasons,
+        useGenreMoods,
         ...(recordId ? { recordId } : {}),
       })
     )
@@ -275,12 +361,20 @@ function App() {
   const storyFor = (record: RecordItem) => (
     <AlbumStory
       record={record}
-      busy={busy}
+      busy={busy || !!state?.enrichment?.running}
       needsWikiSetup={!wikiAllowed}
-      disabled={actionDisabled || recordExpired(record) || !wikiAllowed}
-      onRefresh={() =>
-        void mutate(`/api/records/${encodeURIComponent(record.id)}/enrich`)
+      disabled={
+        actionDisabled ||
+        !!state?.enrichment?.running ||
+        recordExpired(record) ||
+        !wikiAllowed
       }
+      onRefresh={async () => {
+        if (
+          await mutate(`/api/records/${encodeURIComponent(record.id)}/enrich`)
+        )
+          setToast("Albuminformatie wordt op de achtergrond opgehaald.");
+      }}
     />
   );
   const stale = !!state?.settings.collectionStale;
@@ -531,9 +625,7 @@ function App() {
                       Tijd voor
                       <br />
                       een <em>plaat.</em>
-                      <span className="headline-star" aria-hidden="true">
-                        ✳
-                      </span>
+                      <BrandStar className="headline-star" />
                     </h1>
                     <p className="hero-intro">
                       Je hebt de platen. Neem de tijd.
@@ -578,7 +670,7 @@ function App() {
                     {records.length ? (
                       <>
                         <div className="sleeve-back">
-                          {records[2] && <Cover record={records[2]} />}
+                          {records[2] && <Cover record={records[2]} priority />}
                         </div>
                         <div className="vinyl">
                           <div className="vinyl-label">
@@ -588,7 +680,7 @@ function App() {
                           </div>
                         </div>
                         <div className="sleeve-main">
-                          <Cover record={records[0]} />
+                          <Cover record={records[0]} priority />
                         </div>
                         <div className="art-caption">
                           <span>HERONTDEK WAT JE AL HEBT</span>
@@ -642,30 +734,100 @@ function App() {
                         aria-label={m.label}
                       >
                         <span aria-hidden="true">
-                          {["✳", "◒", "☀", "ϟ", "↗"][i]}
+                          {i === 0 ? (
+                            <BrandStar />
+                          ) : (
+                            ["", "◒", "☀", "ϟ", "↗", "↶"][i]
+                          )}
                         </span>
                         {m.label}
                         {mood === m.id && <Check size={14} />}
                       </button>
                     ))}
                   </div>
-                  <label className="anniversary-toggle">
-                    <input
-                      type="checkbox"
-                      checked={useAnniversaries}
-                      onChange={(event) =>
-                        setUseAnniversaries(event.target.checked)
-                      }
-                    />
-                    <CalendarDays size={17} />
-                    <span>
-                      Laat deze dag meebeslissen
-                      <small>
-                        Alleen bij een bekende release-, geboorte- of
-                        overlijdensdatum.
-                      </small>
-                    </span>
-                  </label>
+                  <details className="choice-options">
+                    <summary>
+                      Geef je keuze een richting <ChevronDown size={15} />
+                    </summary>
+                    <div className="choice-options-body">
+                      {" "}
+                      <label className="anniversary-toggle">
+                        <input
+                          type="checkbox"
+                          checked={useAnniversaries}
+                          onChange={(event) =>
+                            setUseAnniversaries(event.target.checked)
+                          }
+                        />
+                        <CalendarDays size={17} />
+                        <span>
+                          Laat deze dag meebeslissen
+                          <small>
+                            Alleen bij een bekende release-, geboorte- of
+                            overlijdensdatum.
+                          </small>
+                        </span>
+                      </label>
+                      <label className="anniversary-toggle">
+                        <input
+                          type="checkbox"
+                          checked={useSeasons}
+                          onChange={(event) =>
+                            setUseSeasons(event.target.checked)
+                          }
+                        />
+                        <span>
+                          Volg het seizoen
+                          <small>
+                            Jouw seizoenslabels wegen mee. Kerstplaten alleen
+                            van 15 november tot en met 6 januari; zelf kiezen
+                            kan altijd.
+                          </small>
+                        </span>
+                      </label>
+                      <label className="anniversary-toggle">
+                        <input
+                          type="checkbox"
+                          checked={useGenreMoods}
+                          onChange={(event) =>
+                            setUseGenreMoods(event.target.checked)
+                          }
+                        />
+                        <span>
+                          Neem mijn genreregels mee
+                          <small>
+                            Alleen je eigen verbanden bij Instellingen. Geen
+                            automatische genrevooroordelen.
+                          </small>
+                        </span>
+                      </label>
+                      <label className="anniversary-toggle">
+                        <input
+                          type="checkbox"
+                          checked={useWeather}
+                          disabled={state.weather.status !== "fresh"}
+                          onChange={(event) =>
+                            setUseWeather(event.target.checked)
+                          }
+                        />
+                        <span>
+                          Neem het weer mee
+                          <small>
+                            {state.weather.status === "fresh"
+                              ? "Alleen actuele metingen en je eigen weerverbanden bij Instellingen."
+                              : "Geen actuele meting; het weer heeft geen invloed."}
+                          </small>
+                        </span>
+                      </label>
+                      <button
+                        type="button"
+                        className="text-link"
+                        onClick={() => go("settings")}
+                      >
+                        Mijn genre- en weervoorkeuren <ArrowRight size={14} />
+                      </button>
+                    </div>
+                  </details>
                   <div className="weather-option">
                     <CloudSun size={18} />
                     <span>
@@ -674,7 +836,7 @@ function App() {
                         : "Het weer buiten"}
                       <small>
                         {state.weather.status === "fresh"
-                          ? `${state.weather.stationId} · alleen ter informatie`
+                          ? `${state.weather.stationId} · invloed alleen met je eigen voorkeuren`
                           : state.weather.status === "unconfigured"
                             ? "Weerstation nog niet gekoppeld"
                             : "Geen actuele meting beschikbaar"}
@@ -743,7 +905,7 @@ function App() {
                     </article>
                   ) : (
                     <div className="occasion-empty">
-                      <span aria-hidden="true">✳</span>
+                      <BrandStar className="empty-star" />
                       <p>
                         Vandaag even geen bekende muziekdatum.
                         <small>
@@ -881,6 +1043,7 @@ function App() {
                         Pak de plaat, leg de naald neer en bevestig hier je
                         luistersessie. Draai detecteert geen muziek.
                       </p>
+                      {detailNotice}
                       {storyFor(chosen.record)}
                     </div>
                   </div>
@@ -930,6 +1093,7 @@ function App() {
                         </span>
                         <span className="no-track">Geen trackdetectie</span>
                       </div>
+                      {detailNotice}
                       {storyFor(active.record)}
                       <details className="detail-section" open>
                         <summary>
@@ -1168,6 +1332,17 @@ function App() {
                                   </button>
                                 ))}
                             </div>
+                            <SeasonEditor
+                              record={r}
+                              disabled={actionDisabled}
+                              onChange={(seasons) =>
+                                void mutate(
+                                  `/api/records/${encodeURIComponent(r.id)}`,
+                                  { seasons },
+                                  "PATCH",
+                                )
+                              }
+                            />
                             <label className="exclude-switch">
                               <input
                                 type="checkbox"
@@ -1231,7 +1406,7 @@ function App() {
                   />
                 )}
                 <div className="collection-end">
-                  <span>✳</span>
+                  <BrandStar className="empty-star" />
                   <p>
                     {demo
                       ? "Deze zes platen zijn speciaal voor deze demo verzonnen."
@@ -1251,6 +1426,11 @@ function App() {
                   </div>
                   <Badge />
                 </div>
+                <ListeningStats
+                  history={state.history}
+                  records={records}
+                  demo={demo}
+                />
                 {active && (
                   <button
                     className="active-history"
@@ -1281,7 +1461,7 @@ function App() {
                           {s.note && <blockquote>“{s.note}”</blockquote>}
                           <span className="history-time">
                             {s.endedAt
-                              ? `${Math.max(1, Math.round((new Date(s.endedAt).getTime() - new Date(s.startedAt).getTime()) / 60000))} minuten geregistreerd`
+                              ? `${formatRegisteredDuration(Date.parse(s.endedAt) - Date.parse(s.startedAt))} geregistreerd`
                               : "Sessie loopt"}
                           </span>
                           {!s.record.demo && <Source record={s.record} />}
@@ -1385,9 +1565,11 @@ function App() {
                         : "Collectie synchroniseren"}
                     </Button>
                     <p className="fineprint">
-                      Draai probeert Discogs-gegevens elke 5 uur te vernieuwen.
-                      Bij verouderde gegevens vraagt Draai eerst om een nieuwe
-                      synchronisatie.
+                      Draai probeert de basis van je collectie elke 5 uur te
+                      vernieuwen. Tracks en credits worden met voorrang
+                      opgehaald wanneer je een plaat kiest of de luistersessie
+                      opent. Verouderde Discogs-gegevens worden verborgen totdat
+                      ze opnieuw zijn opgehaald.
                     </p>
                   </section>
                   <section className="settings-block">
@@ -1405,9 +1587,10 @@ function App() {
                       </span>
                     </div>
                     <p>
-                      Bekijk hier de actuele meting van je weerstation. Het weer
-                      beïnvloedt de platenkeuze nog niet; persoonlijke
-                      weerrelaties zijn een latere uitbreiding.
+                      Bekijk hier je stationsmeting. Het weer weegt alleen mee
+                      als je dit zelf op de startpagina inschakelt én hieronder
+                      eigen weerverbanden hebt ingesteld. Regen betekent niet
+                      automatisch jazz.
                     </p>
                     <dl className="settings-data">
                       <dt>Weerstation</dt>
@@ -1458,6 +1641,16 @@ function App() {
                       wat je hier bevestigt.
                     </p>
                   </section>
+                  <PreferencesEditor
+                    preferences={state.preferences}
+                    genres={[
+                      ...new Set(records.flatMap((record) => record.genres)),
+                    ].sort((a, b) => a.localeCompare(b, "nl"))}
+                    disabled={actionDisabled}
+                    onSave={(preferences) =>
+                      mutate("/api/preferences", preferences, "PATCH")
+                    }
+                  />
                   <section className="settings-block enrichment-settings">
                     <div className="settings-block-head">
                       <BookOpen size={24} />

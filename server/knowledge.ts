@@ -65,7 +65,50 @@ export class KnowledgeClient {
     private wait: (ms: number) => Promise<void> = (ms) =>
       new Promise((r) => setTimeout(r, ms)),
     private now: () => number = Date.now,
+    private cache?: {
+      get<T>(key: string, fallback: T): T;
+      set(key: string, value: unknown): void;
+    },
   ) {}
+  private async excerpt(language: string, title: string, deadline: number) {
+    const key = `wikiExcerpt:${language}:${title}`;
+    const cached = this.cache?.get<{
+      at: number;
+      summary: string;
+      wikipediaUrl: string;
+      language: string;
+    } | null>(key, null);
+    if (cached && this.now() - cached.at < 30 * 86400000) return cached;
+    const wiki = new URL(`https://${language}.wikipedia.org/w/api.php`);
+    wiki.search = new URLSearchParams({
+      action: "query",
+      prop: "extracts",
+      exintro: "1",
+      explaintext: "1",
+      exchars: "600",
+      redirects: "1",
+      titles: title,
+      format: "json",
+      formatversion: "2",
+    }).toString();
+    const data = await this.get(wiki.toString(), deadline);
+    const extract = data.query?.pages?.[0]?.extract;
+    const result = {
+      at: this.now(),
+      summary:
+        typeof extract === "string"
+          ? extract
+              .replace(/<[^>]*>/g, "")
+              .replace(/\s+/g, " ")
+              .trim()
+              .slice(0, 600)
+          : "",
+      language,
+      wikipediaUrl: `https://${language}.wikipedia.org/wiki/${encodeURIComponent(title.replace(/ /g, "_"))}`,
+    };
+    this.cache?.set(key, result);
+    return result;
+  }
   private async get(url: string, deadline: number): Promise<Data> {
     for (let attempt = 0; attempt < 2; attempt++) {
       const remaining = deadline - this.now();
@@ -168,6 +211,12 @@ export class KnowledgeClient {
       }).toString();
       const result = await this.get(entityUrl.toString(), deadline);
       const dates: MusicDate[] = [];
+      const artists: NonNullable<AlbumInfo["artists"]> = [];
+      const artistEntities: Array<{
+        artistId: number;
+        name: string;
+        entity: Data;
+      }> = [];
       let album: Data | undefined;
       let first: Data | undefined;
       for (const match of exact) {
@@ -196,6 +245,7 @@ export class KnowledgeClient {
           album = entity;
           dates.push(...exactDates(entity, "P577", "release", name));
         } else {
+          artistEntities.push({ artistId: Number(id), name, entity });
           dates.push(
             ...exactDates(entity, "P569", "birth", name),
             ...exactDates(entity, "P570", "death", name),
@@ -207,6 +257,7 @@ export class KnowledgeClient {
         ...empty("ready"),
         wikidataUrl: `https://www.wikidata.org/wiki/${(album ?? first).id}`,
         dates,
+        artists,
       };
       if (album) {
         const language = album.sitelinks?.nlwiki
@@ -216,34 +267,44 @@ export class KnowledgeClient {
             : "";
         const title = album.sitelinks?.[`${language}wiki`]?.title;
         if (language && typeof title === "string") {
-          const wiki = new URL(`https://${language}.wikipedia.org/w/api.php`);
-          wiki.search = new URLSearchParams({
-            action: "query",
-            prop: "extracts",
-            exintro: "1",
-            explaintext: "1",
-            exchars: "600",
-            redirects: "1",
-            titles: title,
-            format: "json",
-            formatversion: "2",
-          }).toString();
           try {
-            const data = await this.get(wiki.toString(), deadline);
-            const extract = data.query?.pages?.[0]?.extract;
-            if (typeof extract === "string") {
-              info.summary = extract
-                .replace(/<[^>]*>/g, "")
-                .replace(/\s+/g, " ")
-                .trim()
-                .slice(0, 600);
-              info.language = language;
-              info.wikipediaUrl = `https://${language}.wikipedia.org/wiki/${encodeURIComponent(title.replace(/ /g, "_"))}`;
-            }
+            const excerpt = await this.excerpt(language, title, deadline);
+            info.summary = excerpt.summary;
+            info.language = excerpt.language;
+            info.wikipediaUrl = excerpt.wikipediaUrl;
           } catch {
             /* Structured verified dates remain usable when the excerpt fails. */
           }
         }
+      }
+      // Exact album-artist identities only; do not infer band membership.
+      for (const artist of artistEntities.slice(0, 4)) {
+        const story = {
+          artistId: artist.artistId,
+          name: artist.name,
+          summary: "",
+          wikipediaUrl: "",
+          wikidataUrl: `https://www.wikidata.org/wiki/${artist.entity.id}`,
+          language: "",
+          checkedAt,
+        };
+        const language = artist.entity.sitelinks?.nlwiki
+          ? "nl"
+          : artist.entity.sitelinks?.enwiki
+            ? "en"
+            : "";
+        const title = artist.entity.sitelinks?.[`${language}wiki`]?.title;
+        if (language && typeof title === "string") {
+          try {
+            const excerpt = await this.excerpt(language, title, deadline);
+            story.summary = excerpt.summary;
+            story.language = excerpt.language;
+            story.wikipediaUrl = excerpt.wikipediaUrl;
+          } catch {
+            /* One artist outage never removes verified album facts. */
+          }
+        }
+        artists.push(story);
       }
       return info;
     } catch {
