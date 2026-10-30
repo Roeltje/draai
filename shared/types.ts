@@ -1,13 +1,32 @@
 export type Mood =
   "alles" | "rust" | "warm" | "energie" | "avontuur" | "nostalgie";
 export type Season = "lente" | "zomer" | "herfst" | "winter" | "kerst";
+export interface TimerTarget {
+  id: string;
+  kind: "side" | "album";
+  label: string;
+  durationSeconds: number;
+}
+export interface SideTimerState {
+  id: string;
+  sessionId: string;
+  target: TimerTarget;
+  startedAt: string;
+  pausedAt: string | null;
+  pausedSeconds: number;
+  graceMinutes: number;
+  snoozedUntil: string | null;
+  dismissed: boolean;
+}
 export interface SelectionPreferences {
   genreMoods: Array<{ genre: string; moods: Mood[] }>;
   styleMoods?: Array<{ style: string; moods: Mood[] }>;
   weatherMoods: { rain: Mood[]; cold: Mood[]; warm: Mood[] };
   weatherThresholds?: { coldBelow: number; warmFrom: number };
+  sideTimer?: { enabled: boolean; graceMinutes: number };
 }
 export interface Track {
+  type?: "index";
   position: string;
   title: string;
   duration?: string;
@@ -119,6 +138,7 @@ export interface AppState {
   sync: SyncState;
   weather: WeatherState;
   preferences?: SelectionPreferences;
+  sideTimer?: SideTimerState | null;
   occasions?: Occasion[];
   enrichment?: {
     running: boolean;
