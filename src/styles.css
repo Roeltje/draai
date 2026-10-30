@@ -3845,3 +3845,159 @@ h2 {
     gap: 12px;
   }
 }
+
+.side-timer {
+  margin: 22px 0 28px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  background: #eceadd;
+}
+.side-timer-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.side-timer-heading h2 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 23px;
+  margin: 0;
+}
+.side-timer-heading > span {
+  margin-left: auto;
+  font-size: 9px;
+  color: var(--muted);
+}
+.side-timer-description,
+.side-timer-footnote {
+  font-size: 11px;
+  line-height: 1.8;
+  color: var(--muted);
+  margin: 12px 0;
+}
+.side-timer-reading {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 22px 0 14px;
+}
+.side-timer-reading > div > span {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 7px;
+}
+.side-timer-reading strong {
+  font-size: 13px;
+  font-weight: 500;
+}
+.side-timer-time {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--serif);
+  font-size: 38px;
+  white-space: nowrap;
+}
+.side-timer-progress {
+  height: 3px;
+  background: var(--line);
+}
+.side-timer-progress > span {
+  display: block;
+  height: 100%;
+  background: var(--ink);
+}
+.side-timer-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin: 14px 0;
+}
+.side-timer-controls > button,
+.side-timer-start-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid var(--line);
+  min-height: 44px;
+  padding: 10px 14px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 11px;
+  line-height: 1.6;
+}
+.side-timer-start {
+  margin-top: 22px;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+}
+.side-timer-start label {
+  display: block;
+  font-size: 11px;
+  margin-bottom: 14px;
+}
+.side-timer-start select {
+  display: block;
+  min-height: 46px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 14px;
+  border-radius: 0;
+}
+.side-timer-start-button {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.side-timer-footnote {
+  font-size: 10px;
+  margin-bottom: 0;
+}
+.side-timer-due {
+  border-color: var(--coral);
+}
+.side-timer-reminder {
+  padding: 16px;
+  background: var(--paper);
+  border-left: 3px solid var(--coral);
+  margin-top: 20px;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.side-timer-reminder > strong {
+  font-weight: 500;
+}
+.side-timer-reminder p {
+  color: var(--muted);
+  font-size: 11px;
+}
+@media (max-width: 600px) {
+  .side-timer {
+    padding: 18px 15px;
+  }
+  .side-timer-heading {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .side-timer-heading h2 {
+    font-size: 21px;
+  }
+  .side-timer-heading > span {
+    margin-left: 28px;
+    flex-basis: 100%;
+  }
+  .side-timer-time {
+    font-size: 33px;
+  }
+  .side-timer-controls > button {
+    flex-grow: 1;
+  }
+  .side-timer-start-button {
+    width: 100%;
+  }
+}

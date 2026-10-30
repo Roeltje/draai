@@ -86,3 +86,9 @@ MIT-licentie, portable ontwikkelinstructies, SECURITY.md, korte LXC-updatehandle
 - Op verzoek voortaan featurebranches en pull requests; geen rechtstreekse publicatie naar main.
 - Sol medium bouwt afgebakende backend- en interfacetaken; hoofdagent controleert integratie en browsergedrag.
 - Instelbare koude-/warmtegrenzen met validatie en behoud bij herstart/oudere clients; standaard 10/22 °C. Stijloverzicht telt bekende styles en maakt ontbrekende regels direct bewerkbaar.
+
+## Optionele kanttimer — 30 oktober 2026
+- PR #10 bevat temperatuurgrenzen en stijlinventaris; GitHub CI groen. PR #11 bouwt daarop voort met de timer. Niets automatisch gemerged; main niet rechtstreeks gewijzigd.
+- Timer standaard uit, handmatig starten per kant of expliciete albumfallback, pauze/hervatten, snooze5min, herinnering verbergen en stoppen. Instelling uit wist timer zonder luistersessie af te ronden.
+- Sol medium deed frontend/backend; hoofdagent reviewde en integreerde de inmiddels gewijzigde main inclusief pakketupdate. Alle91 tests, typecheck en productiebuild slagen.
+- Browser op telefoonformaat: inschakelen/wachttijd0, A starten, pauze/hervatten, herinnering, snooze, B starten, herladen, herinnering uit, globale instelling uit en sessie afronden. Tijdelijke fictieve tracks van1seconde gebruikt om geen echte minuten te wachten. Geen echte Discogs/WU/hardware- of LXC-update in deze ronde.
