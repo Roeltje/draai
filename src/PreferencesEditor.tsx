@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { Check, Plus, SlidersHorizontal, X } from "lucide-react";
-import type { Mood, SelectionPreferences } from "../shared/types";
-import { DEFAULT_PREFERENCES } from "../shared/selection";
+import type { Mood, RecordItem, SelectionPreferences } from "../shared/types";
+import {
+  DEFAULT_PREFERENCES,
+  DEFAULT_WEATHER_THRESHOLDS,
+} from "../shared/selection";
+import { normalizeStyle, styleCoverage } from "./styleCoverage";
 const labels: { id: Mood; name: string }[] = [
   { id: "rust", name: "Rustig" },
   { id: "warm", name: "Knus" },
@@ -51,7 +55,9 @@ function RuleEditor({
   collection,
   disabled,
   onChange,
+  focusRule,
 }: {
+  focusRule?: string;
   kind: "Stijl" | "Genre";
   rules: Rule[];
   collection: string[];
@@ -61,6 +67,12 @@ function RuleEditor({
   const [showAll, setShowAll] = useState(false);
   const [selected, setSelected] = useState("");
   const [name, setName] = useState("");
+  useEffect(() => {
+    if (focusRule) {
+      setSelected(focusRule);
+      setShowAll(true);
+    }
+  }, [focusRule]);
   const present = new Set(collection.map((value) => value.toLocaleLowerCase()));
   const matching = rules.filter((rule) =>
     present.has(rule.name.toLocaleLowerCase()),
@@ -194,12 +206,14 @@ function RuleEditor({
 }
 export function PreferencesEditor({
   preferences,
+  records,
   genres,
   styles,
   disabled,
   onSave,
 }: {
   preferences?: SelectionPreferences;
+  records: RecordItem[];
   genres: string[];
   styles: string[];
   disabled: boolean;
@@ -210,14 +224,61 @@ export function PreferencesEditor({
     ),
     [dirty, setDirty] = useState(false),
     [saved, setSaved] = useState(false);
+  const effective =
+    preferences?.weatherThresholds || DEFAULT_WEATHER_THRESHOLDS;
+  const [coldBelow, setColdBelow] = useState(String(effective.coldBelow));
+  const [warmFrom, setWarmFrom] = useState(String(effective.warmFrom));
+  const [thresholdDirty, setThresholdDirty] = useState(false);
+  const [focusStyle, setFocusStyle] = useState("");
+  const [otherStyle, setOtherStyle] = useState("");
+  const coverage = styleCoverage(records, draft.styleMoods);
+  const unmapped = coverage.styles.filter(
+    (style) => style.status === "unmapped",
+  );
+  const cold = coldBelow.trim() === "" ? NaN : Number(coldBelow);
+  const warm = warmFrom.trim() === "" ? NaN : Number(warmFrom);
+  const thresholdValid =
+    Number.isFinite(cold) &&
+    Number.isFinite(warm) &&
+    cold >= -40 &&
+    cold <= 50 &&
+    warm >= -40 &&
+    warm <= 50 &&
+    cold < warm;
   const source = JSON.stringify(preferences || DEFAULT_PREFERENCES);
   useEffect(() => {
-    if (!dirty) setDraft(JSON.parse(source) as SelectionPreferences);
+    if (!dirty) {
+      const next = JSON.parse(source) as SelectionPreferences;
+      setDraft(next);
+      setColdBelow(
+        String(
+          (next.weatherThresholds || DEFAULT_WEATHER_THRESHOLDS).coldBelow,
+        ),
+      );
+      setWarmFrom(
+        String((next.weatherThresholds || DEFAULT_WEATHER_THRESHOLDS).warmFrom),
+      );
+      setThresholdDirty(false);
+    }
   }, [source, dirty]);
   const change = (next: SelectionPreferences) => {
     setDraft(next);
     setDirty(true);
     setSaved(false);
+  };
+  const createStyle = (name: string) => {
+    if (!name) return;
+    if (
+      !(draft.styleMoods || []).some(
+        (rule) => normalizeStyle(rule.style) === normalizeStyle(name),
+      )
+    ) {
+      change({
+        ...draft,
+        styleMoods: [...(draft.styleMoods || []), { style: name, moods: [] }],
+      });
+    }
+    setFocusStyle(name);
   };
   return (
     <section className="settings-block preference-settings">
@@ -231,8 +292,152 @@ export function PreferencesEditor({
         aan jouw smaak aan; op de startpagina kies je of ze meedoen. Bestaande
         voorkeuren blijven behouden.
       </p>
+      <div className="style-coverage">
+        <h3>Stijlen in je platenkast</h3>
+        <p className="preference-hint">
+          {coverage.totalRecords} beschikbare LP’s met actuele
+          collectiegegevens. {coverage.missingStyles} daarvan zonder
+          stijlinformatie. Stijlen kunnen nog ontbreken zolang persingsdetails
+          niet zijn opgehaald; dit overzicht beoordeelt alleen de nu bekende
+          stijlen. Eigen plaatlabels gaan altijd voor.
+        </p>
+        {coverage.styles.length ? (
+          <>
+            <div className="coverage-counts">
+              <span>
+                <strong>
+                  {
+                    coverage.styles.filter((style) => style.status === "mapped")
+                      .length
+                  }
+                </strong>{" "}
+                met stemming
+              </span>
+              <span>
+                <strong>
+                  {
+                    coverage.styles.filter((style) => style.status === "off")
+                      .length
+                  }
+                </strong>{" "}
+                bewust uit
+              </span>
+              <span>
+                <strong>{unmapped.length}</strong> zonder verband
+              </span>
+            </div>
+            <details>
+              <summary>Bekijk stijlen en aantallen</summary>
+              <ul className="coverage-list">
+                {coverage.styles.slice(0, 5).map((style) => (
+                  <li key={style.name}>
+                    <span>
+                      {style.name}
+                      <small>
+                        {style.count} LP’s ·{" "}
+                        {style.status === "mapped"
+                          ? "met stemming"
+                          : style.status === "off"
+                            ? "bewust uit"
+                            : "zonder verband"}
+                      </small>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {coverage.styles.length > 5 && (
+                <p className="preference-hint">
+                  De vijf meest voorkomende stijlen staan hierboven. Bekijk de
+                  overige stijlen in de keuzelijst hieronder.
+                </p>
+              )}
+              <select
+                className="rule-select"
+                aria-label="Alle bekende stijlen en aantallen"
+                defaultValue=""
+              >
+                <option value="" disabled>
+                  Alle {coverage.styles.length} stijlen en aantallen
+                </option>
+                {coverage.styles.map((style) => (
+                  <option key={style.name}>
+                    {style.name} · {style.count} LP’s ·{" "}
+                    {style.status === "mapped"
+                      ? "met stemming"
+                      : style.status === "off"
+                        ? "bewust uit"
+                        : "zonder verband"}
+                  </option>
+                ))}
+              </select>
+            </details>
+            {!!unmapped.length && (
+              <>
+                <h4>Nog zonder stijlverband</h4>
+                <p className="preference-hint">
+                  Meest voorkomende eerst. Voeg een conceptregel toe en kies
+                  daarna de stemmingen die jij erbij vindt passen.
+                </p>
+                <ul className="coverage-list">
+                  {unmapped.slice(0, 5).map((style) => (
+                    <li key={style.name}>
+                      <span>
+                        {style.name}
+                        <small>{style.count} LP’s</small>
+                      </span>
+                      <button
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => createStyle(style.name)}
+                      >
+                        <Plus size={14} /> Regel maken
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                {unmapped.length > 5 && (
+                  <div className="coverage-more">
+                    <select
+                      className="rule-select"
+                      aria-label="Overige stijlen zonder verband"
+                      value={otherStyle}
+                      onChange={(event) => setOtherStyle(event.target.value)}
+                    >
+                      <option value="">
+                        Kies uit alle {unmapped.length} stijlen zonder verband
+                      </option>
+                      {unmapped.map((style) => (
+                        <option key={style.name} value={style.name}>
+                          {style.name} · {style.count} LP’s
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      disabled={disabled || !otherStyle}
+                      onClick={() => {
+                        createStyle(otherStyle);
+                        setOtherStyle("");
+                      }}
+                    >
+                      <Plus size={14} /> Regel maken
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </>
+        ) : (
+          <p className="preference-hint">
+            {coverage.totalRecords
+              ? "Voor deze LP’s zijn nog geen stijlen bekend. Je kunt hieronder alvast een eigen verband maken."
+              : "Er zijn nu geen beschikbare LP’s met actuele collectiegegevens om stijlen te tellen."}
+          </p>
+        )}
+      </div>
       <RuleEditor
         kind="Stijl"
+        focusRule={focusStyle}
         collection={styles}
         rules={(draft.styleMoods || []).map((rule) => ({
           name: rule.style,
@@ -292,10 +497,66 @@ export function PreferencesEditor({
         <summary>Weer &amp; stemming</summary>
         <p className="preference-hint">
           Geef zelf aan welke sfeer past bij regen, kou of warmte. Zonder jouw
-          verbanden krijgt het weer geen gewicht. Regen: meer dan 0 mm/uur, kou:
-          onder 10 °C, warmte: vanaf 22 °C. Alleen een meting van maximaal 30
-          minuten oud doet mee.
+          verbanden krijgt het weer geen gewicht. Regen: meer dan 0 mm/uur.
+          Alleen een meting van maximaal 30 minuten oud doet mee.
         </p>
+        <div className="weather-thresholds">
+          <label>
+            Koud bij minder dan (°C)
+            <input
+              type="number"
+              min={-40}
+              max={50}
+              step="any"
+              value={coldBelow}
+              disabled={disabled}
+              aria-invalid={!thresholdValid}
+              onChange={(event) => {
+                setColdBelow(event.target.value);
+                setThresholdDirty(true);
+                setDirty(true);
+                setSaved(false);
+              }}
+            />
+          </label>
+          <label>
+            Warm vanaf (°C)
+            <input
+              type="number"
+              min={-40}
+              max={50}
+              step="any"
+              value={warmFrom}
+              disabled={disabled}
+              aria-invalid={!thresholdValid}
+              onChange={(event) => {
+                setWarmFrom(event.target.value);
+                setThresholdDirty(true);
+                setDirty(true);
+                setSaved(false);
+              }}
+            />
+          </label>
+        </div>
+        <p className="preference-hint" role="status">
+          {thresholdValid
+            ? `Kou telt onder ${cold.toLocaleString("nl-NL")} °C; warmte vanaf ${warm.toLocaleString("nl-NL")} °C. Daartussen krijgt temperatuur geen gewicht.`
+            : "Vul twee temperaturen tussen −40 en 50 °C in. De koudegrens moet lager zijn dan de warmtegrens."}
+        </p>
+        <button
+          className="threshold-reset"
+          type="button"
+          disabled={disabled}
+          onClick={() => {
+            setColdBelow(String(DEFAULT_WEATHER_THRESHOLDS.coldBelow));
+            setWarmFrom(String(DEFAULT_WEATHER_THRESHOLDS.warmFrom));
+            setThresholdDirty(true);
+            setDirty(true);
+            setSaved(false);
+          }}
+        >
+          Alleen temperatuurgrenzen terugzetten naar 10 en 22 °C (concept)
+        </button>
         {(
           [
             { id: "rain", label: "Bij regen" },
@@ -326,9 +587,19 @@ export function PreferencesEditor({
         <button
           type="button"
           className="button secondary"
-          disabled={disabled || !dirty}
+          disabled={disabled || !dirty || !thresholdValid}
           onClick={async () => {
-            if (await onSave(draft)) {
+            if (
+              thresholdValid &&
+              (await onSave(
+                thresholdDirty
+                  ? {
+                      ...draft,
+                      weatherThresholds: { coldBelow: cold, warmFrom: warm },
+                    }
+                  : draft,
+              ))
+            ) {
               setDirty(false);
               setSaved(true);
             }
