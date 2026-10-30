@@ -77,3 +77,8 @@ MIT-licentie, portable ontwikkelinstructies, SECURITY.md, korte LXC-updatehandle
 - Gebruiker bevestigt geslaagde update op de eigen Ubuntu 26.04-LXC; app is nog bereikbaar. Dit is een gebruikersbevestiging, geen eigen controle van die server.
 - Repository via GitHub als openbaar bevestigd. README voor nieuwe gebruikers herschreven, met mobiele en brede screenshots van fictieve demogegevens. Geen persoonlijke collectie of configuratie afgebeeld.
 - Alleen documentatie en screenshots gewijzigd; geen nieuwe runtimefuncties in deze ronde.
+
+## CI en Dependabot — 30 oktober 2026
+- GitHub Actions-workflow `ci.yml`: bij push naar main en elke PR install (frozen lockfile), typecontrole, tests, build en `pnpm audit --prod --audit-level high`. Alleen leesrechten, Node 24, pnpm-versie uit package.json.
+- Dependabot: minor- en patchupdates gegroepeerd in één PR, grote versiesprongen apart, 5 dagen cooldown voor nieuwe versies; GitHub Actions maandelijks bijgewerkt.
+- Lokaal alle stappen van de workflow geslaagd behalve de audit: main bevat nog het hoge lek in @fastify/static, dat Dependabot-PR #2 (10.1.7) oplost. CI wordt pas groen na die merge. De workflow zelf is nog niet op GitHub gedraaid.
