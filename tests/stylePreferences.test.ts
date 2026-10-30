@@ -142,11 +142,20 @@ test("first-run defaults persist; upgrade preserves saved genre/weather and adds
     assert.deepEqual(service.preferences(), {
       ...old,
       styleMoods: DEFAULT_PREFERENCES.styleMoods,
+      weatherThresholds: DEFAULT_PREFERENCES.weatherThresholds,
     });
-    service.setPreferences({ ...old, styleMoods: [] });
+    service.setPreferences({
+      ...old,
+      styleMoods: [],
+      weatherThresholds: DEFAULT_PREFERENCES.weatherThresholds,
+    });
     await service.close();
     service = new Service(c);
-    assert.deepEqual(service.preferences(), { ...old, styleMoods: [] });
+    assert.deepEqual(service.preferences(), {
+      ...old,
+      styleMoods: [],
+      weatherThresholds: DEFAULT_PREFERENCES.weatherThresholds,
+    });
   } finally {
     await service.close();
     rmSync(c.dataDir, { recursive: true, force: true });
@@ -212,7 +221,11 @@ test("API validates normalized style rules, preserves overrides for old clients,
     await app.close();
     const reopened = new Service(c);
     try {
-      assert.deepEqual(reopened.preferences(), { ...empty, styleMoods: [] });
+      assert.deepEqual(reopened.preferences(), {
+        ...empty,
+        styleMoods: [],
+        weatherThresholds: DEFAULT_PREFERENCES.weatherThresholds,
+      });
     } finally {
       await reopened.close();
     }
@@ -245,6 +258,39 @@ test("selection uses mapping by default and allows switching it off", async () =
     );
   } finally {
     await service.close();
+    rmSync(c.dataDir, { recursive: true, force: true });
+  }
+});
+
+test("mixed style whitespace matches selection and cannot create duplicate API rules", async () => {
+  const prefs: SelectionPreferences = {
+    ...empty,
+    styleMoods: [{ style: " Deep  House ", moods: ["energie"] }],
+  };
+  const record = {
+    ...demoRecords(new Date(now).toISOString())[0],
+    tags: [],
+    styles: [" DEEP\tHOUSE "],
+  };
+  assert.equal(
+    selectionFactors(record, "energie", prefs, weather, now, options).weight,
+    1.4,
+  );
+  const c = config();
+  const { app } = await buildApp(c, {}, { schedule: false });
+  try {
+    const result = await app.inject({
+      method: "PATCH",
+      url: "/api/preferences",
+      payload: {
+        ...prefs,
+        styleMoods: [...prefs.styleMoods!, { style: "deep\thouse", moods: [] }],
+      },
+    });
+    assert.equal(result.statusCode, 400);
+    assert.match(result.json().error, /elke stijl maar één keer/);
+  } finally {
+    await app.close();
     rmSync(c.dataDir, { recursive: true, force: true });
   }
 });

@@ -22,10 +22,12 @@ export const SEASONS: Season[] = [
   "winter",
   "kerst",
 ];
+export const DEFAULT_WEATHER_THRESHOLDS = { coldBelow: 10, warmFrom: 22 };
 export const DEFAULT_PREFERENCES: SelectionPreferences = {
   genreMoods: DEFAULT_GENRE_MOODS,
   styleMoods: DEFAULT_STYLE_MOODS,
   weatherMoods: { rain: [], cold: [], warm: [] },
+  weatherThresholds: DEFAULT_WEATHER_THRESHOLDS,
 };
 export function seasonToday(now: number): {
   season: Season;
@@ -94,7 +96,10 @@ export function selectionFactors(
     );
   const styleRules = options.useGenreMoods
     ? (prefs.styleMoods ?? []).filter((rule) =>
-        matches(record.styles, rule.style),
+        matches(
+          record.styles.map((style) => style.replace(/\s+/g, " ")),
+          rule.style.replace(/\s+/g, " "),
+        ),
       )
     : [];
   const genreRules =
@@ -123,12 +128,19 @@ export function selectionFactors(
     now - Date.parse(weather.observedAt) <= 30 * 60000 &&
     now - Date.parse(weather.observedAt) >= -5 * 60000
   ) {
+    const thresholds = prefs.weatherThresholds ?? DEFAULT_WEATHER_THRESHOLDS;
     const conditions: Array<"rain" | "cold" | "warm"> = [];
     if (weather.rainRate !== null && weather.rainRate > 0)
       conditions.push("rain");
-    if (weather.temperature !== null && weather.temperature < 10)
+    if (
+      weather.temperature !== null &&
+      weather.temperature < thresholds.coldBelow
+    )
       conditions.push("cold");
-    if (weather.temperature !== null && weather.temperature >= 22)
+    if (
+      weather.temperature !== null &&
+      weather.temperature >= thresholds.warmFrom
+    )
       conditions.push("warm");
     if (
       conditions.some((c) =>

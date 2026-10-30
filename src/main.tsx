@@ -1645,6 +1645,7 @@ function App() {
                   </section>
                   <PreferencesEditor
                     preferences={state.preferences}
+                    records={records}
                     styles={[
                       ...new Set(records.flatMap((record) => record.styles)),
                     ].sort((a, b) => a.localeCompare(b, "nl"))}
