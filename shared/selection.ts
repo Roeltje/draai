@@ -5,6 +5,7 @@ import type {
   SelectionPreferences,
   WeatherState,
 } from "./types.ts";
+import { DEFAULT_SIDE_TIMER_SETTINGS } from "./sideTimer.ts";
 import { DEFAULT_GENRE_MOODS, DEFAULT_STYLE_MOODS } from "./moodDefaults.ts";
 export { DEFAULT_GENRE_MOODS, DEFAULT_STYLE_MOODS } from "./moodDefaults.ts";
 export const MOODS: Mood[] = [
@@ -28,6 +29,7 @@ export const DEFAULT_PREFERENCES: SelectionPreferences = {
   styleMoods: DEFAULT_STYLE_MOODS,
   weatherMoods: { rain: [], cold: [], warm: [] },
   weatherThresholds: DEFAULT_WEATHER_THRESHOLDS,
+  sideTimer: DEFAULT_SIDE_TIMER_SETTINGS,
 };
 export function seasonToday(now: number): {
   season: Season;

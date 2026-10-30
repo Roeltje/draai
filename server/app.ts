@@ -45,6 +45,24 @@ function validatePreferences(
       400,
       "Ongeldige temperatuurgrenzen: gebruik waarden tussen -40 en 50, met koud lager dan warm.",
     );
+  const sideTimer = value.sideTimer as Record<string, unknown> | undefined;
+  if (
+    sideTimer !== undefined &&
+    (!sideTimer ||
+      typeof sideTimer !== "object" ||
+      Array.isArray(sideTimer) ||
+      Object.keys(sideTimer).some(
+        (key) => !["enabled", "graceMinutes"].includes(key),
+      ) ||
+      typeof sideTimer.enabled !== "boolean" ||
+      !Number.isInteger(sideTimer.graceMinutes) ||
+      (sideTimer.graceMinutes as number) < 0 ||
+      (sideTimer.graceMinutes as number) > 30)
+  )
+    throw new AppError(
+      400,
+      "Ongeldige timerinstellingen: kies een wachttijd van 0 tot en met 30 minuten.",
+    );
   if (
     Object.keys(value).some(
       (k) =>
@@ -53,6 +71,7 @@ function validatePreferences(
           "styleMoods",
           "weatherMoods",
           "weatherThresholds",
+          "sideTimer",
         ].includes(k),
     ) ||
     !Array.isArray(value.genreMoods) ||
@@ -101,6 +120,7 @@ function validatePreferences(
         }
       : {}),
     weatherMoods: weather,
+    ...(sideTimer !== undefined ? { sideTimer } : {}),
     ...(thresholds !== undefined ? { weatherThresholds: thresholds } : {}),
   } as SelectionPreferences;
   if (
@@ -195,6 +215,41 @@ export async function buildApp(
       b.useSeasons as boolean | undefined,
       b.useGenreMoods as boolean | undefined,
     );
+    return service.state();
+  });
+  app.post("/api/timer", async (request) => {
+    const body = objectBody(request.body);
+    const actions = [
+      "start",
+      "pause",
+      "resume",
+      "snooze",
+      "dismiss",
+      "stop",
+    ] as const;
+    if (
+      !actions.includes(body.action as (typeof actions)[number]) ||
+      Object.keys(body).some(
+        (key) =>
+          !["action", "sessionId", "expectedTimerId", "targetId"].includes(key),
+      ) ||
+      !(
+        body.expectedTimerId === null ||
+        (typeof body.expectedTimerId === "string" &&
+          body.expectedTimerId.length > 0 &&
+          body.expectedTimerId.length <= 150)
+      ) ||
+      (body.action !== "start" && body.targetId !== undefined)
+    )
+      throw new AppError(400, "Ongeldige timeractie.");
+    service.timer({
+      action: body.action as (typeof actions)[number],
+      sessionId: requiredString(body.sessionId),
+      expectedTimerId: body.expectedTimerId as string | null,
+      ...(body.action === "start"
+        ? { targetId: requiredString(body.targetId) }
+        : {}),
+    });
     return service.state();
   });
   app.post("/api/sessions/start", async (request) => {

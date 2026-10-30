@@ -79,6 +79,7 @@ export function enrich(record: RecordItem, detail: AnyData): RecordItem {
     tracks: (detail.tracklist ?? [])
       .filter((t: AnyData) => t.type_ !== "heading")
       .map((t: AnyData) => ({
+        ...(t.type_ === "index" ? { type: "index" as const } : {}),
         position: t.position ?? "",
         title: t.title ?? "",
         duration: t.duration || undefined,

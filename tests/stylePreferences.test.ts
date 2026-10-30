@@ -143,11 +143,13 @@ test("first-run defaults persist; upgrade preserves saved genre/weather and adds
       ...old,
       styleMoods: DEFAULT_PREFERENCES.styleMoods,
       weatherThresholds: DEFAULT_PREFERENCES.weatherThresholds,
+      sideTimer: DEFAULT_PREFERENCES.sideTimer,
     });
     service.setPreferences({
       ...old,
       styleMoods: [],
       weatherThresholds: DEFAULT_PREFERENCES.weatherThresholds,
+      sideTimer: DEFAULT_PREFERENCES.sideTimer,
     });
     await service.close();
     service = new Service(c);
@@ -155,6 +157,7 @@ test("first-run defaults persist; upgrade preserves saved genre/weather and adds
       ...old,
       styleMoods: [],
       weatherThresholds: DEFAULT_PREFERENCES.weatherThresholds,
+      sideTimer: DEFAULT_PREFERENCES.sideTimer,
     });
   } finally {
     await service.close();
@@ -225,6 +228,7 @@ test("API validates normalized style rules, preserves overrides for old clients,
         ...empty,
         styleMoods: [],
         weatherThresholds: DEFAULT_PREFERENCES.weatherThresholds,
+        sideTimer: DEFAULT_PREFERENCES.sideTimer,
       });
     } finally {
       await reopened.close();
