@@ -4,4 +4,23 @@ updates:
     directory: /
     schedule:
       interval: weekly
-    open-pull-requests-limit: 3
+    # Nieuwe versies eerst een paar dagen laten liggen; beveiligingsupdates gaan direct.
+    cooldown:
+      default-days: 5
+    open-pull-requests-limit: 5
+    groups:
+      # Kleine updates samen in één PR; grote versiesprongen blijven losse PR's.
+      minor-en-patch:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: deps
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: ci
