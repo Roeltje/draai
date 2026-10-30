@@ -9,9 +9,11 @@ import type {
   WeatherState,
   Season,
   SelectionPreferences,
+  SideTimerState,
 } from "../shared/types.ts";
 import { WorkQueue } from "./queue.ts";
 import { DEFAULT_PREFERENCES, selectionFactors } from "../shared/selection.ts";
+import { timerTargets } from "../shared/sideTimer.ts";
 import { Store } from "./store.ts";
 import { demoRecords } from "./demo.ts";
 import { KnowledgeClient, KNOWLEDGE_TTL, occasionsFor } from "./knowledge.ts";
@@ -93,7 +95,8 @@ export class Service {
       this.store.set("preferences", structuredClone(DEFAULT_PREFERENCES));
     else if (
       savedPreferences.styleMoods === undefined ||
-      savedPreferences.weatherThresholds === undefined
+      savedPreferences.weatherThresholds === undefined ||
+      savedPreferences.sideTimer === undefined
     )
       this.store.set("preferences", {
         ...savedPreferences,
@@ -103,7 +106,22 @@ export class Service {
         weatherThresholds:
           savedPreferences.weatherThresholds ??
           structuredClone(DEFAULT_PREFERENCES.weatherThresholds),
+        sideTimer:
+          savedPreferences.sideTimer ??
+          structuredClone(DEFAULT_PREFERENCES.sideTimer),
       });
+    const restoredTimer = this.store.get<SideTimerState | null>(
+      "sideTimer",
+      null,
+    );
+    if (
+      restoredTimer &&
+      (!this.preferences().sideTimer?.enabled ||
+        !this.store.db
+          .prepare("SELECT id FROM sessions WHERE id=? AND ended_at IS NULL")
+          .get(restoredTimer.sessionId))
+    )
+      this.store.set("sideTimer", null);
     if (this.mode === "demo" && !this.store.records().length)
       demoRecords(this.iso()).forEach((r) => this.store.put(r, this.iso()));
     if (this.mode === "demo" && this.store.get("demoKnowledgeVersion", 0) < 1) {
@@ -238,6 +256,7 @@ export class Service {
       sync: { ...this.sync },
       weather,
       preferences: this.preferences(),
+      sideTimer: this.currentTimer(sessions.find((s) => !s.ended_at)?.id),
       occasions: occasionsFor(records, this.now()),
       enrichment: { ...this.enrichment },
       settings: {
@@ -405,6 +424,7 @@ export class Service {
     this.store.db
       .prepare("UPDATE sessions SET ended_at=?,note=? WHERE id=?")
       .run(this.iso(), note ?? "", sessionId);
+    this.store.set("sideTimer", null);
     this.emit();
   }
   patch(
@@ -556,7 +576,115 @@ export class Service {
       styleMoods: preferences.styleMoods ?? this.preferences().styleMoods,
       weatherThresholds:
         preferences.weatherThresholds ?? this.preferences().weatherThresholds,
+      sideTimer: preferences.sideTimer ?? this.preferences().sideTimer,
     });
+    if (!this.preferences().sideTimer?.enabled)
+      this.store.set("sideTimer", null);
+    this.emit();
+  }
+  private currentTimer(sessionId?: string): SideTimerState | null {
+    const timer = this.store.get<SideTimerState | null>("sideTimer", null);
+    return this.preferences().sideTimer?.enabled &&
+      timer?.sessionId === sessionId
+      ? timer
+      : null;
+  }
+  timer(command: {
+    action: "start" | "pause" | "resume" | "snooze" | "dismiss" | "stop";
+    sessionId: string;
+    expectedTimerId: string | null;
+    targetId?: string;
+  }) {
+    const session = this.store.db
+      .prepare("SELECT * FROM sessions WHERE id=? AND ended_at IS NULL")
+      .get(command.sessionId) as SessionRow | undefined;
+    const settings = this.preferences().sideTimer;
+    if (!settings?.enabled || !session)
+      throw new AppError(
+        409,
+        "De timer staat uit of deze luistersessie is niet meer actief.",
+      );
+    const current = this.store.get<SideTimerState | null>("sideTimer", null);
+    if (
+      (current?.id ?? null) !== command.expectedTimerId ||
+      (current && current.sessionId !== session.id)
+    )
+      throw new AppError(
+        409,
+        "De timer is intussen gewijzigd. Ververs de pagina en probeer opnieuw.",
+      );
+    const now = this.iso();
+    let next: SideTimerState | null;
+    if (command.action === "start") {
+      const record = this.store.record(session.record_id);
+      if (
+        !record ||
+        !record.available ||
+        !record.isLP ||
+        (!record.demo &&
+          (stale(record.fetchedAt, this.now()) ||
+            stale(this.store.detailsAt(record.id), this.now())))
+      )
+        throw new AppError(
+          409,
+          "Ververs de releasegegevens voordat je een timer start.",
+        );
+      const target = timerTargets(record).targets.find(
+        (target) => target.id === command.targetId,
+      );
+      if (!target)
+        throw new AppError(
+          409,
+          "Deze kant heeft geen betrouwbare speeltijd. Ververs de gegevens of kies een beschikbare kant.",
+        );
+      next = {
+        id: randomUUID(),
+        sessionId: session.id,
+        target,
+        startedAt: now,
+        pausedAt: null,
+        pausedSeconds: 0,
+        graceMinutes: settings.graceMinutes,
+        snoozedUntil: null,
+        dismissed: false,
+      };
+    } else {
+      if (!current) throw new AppError(409, "Er is geen actieve timer.");
+      next = { ...current, id: randomUUID() };
+      switch (command.action) {
+        case "pause":
+          if (current.pausedAt)
+            throw new AppError(409, "De timer is al gepauzeerd.");
+          next.pausedAt = now;
+          next.snoozedUntil = null;
+          break;
+        case "resume":
+          if (!current.pausedAt) throw new AppError(409, "De timer loopt al.");
+          next.pausedSeconds += Math.max(
+            0,
+            (this.now() - Date.parse(current.pausedAt)) / 1000,
+          );
+          next.pausedAt = null;
+          next.snoozedUntil = null;
+          break;
+        case "snooze":
+          if (current.pausedAt || current.dismissed)
+            throw new AppError(
+              409,
+              "Deze herinnering kan nu niet worden uitgesteld.",
+            );
+          next.snoozedUntil = new Date(this.now() + 5 * 60000).toISOString();
+          break;
+        case "dismiss":
+          next.dismissed = true;
+          next.snoozedUntil = null;
+          break;
+        case "stop":
+          next = null;
+          break;
+      }
+    }
+    this.store.set("sideTimer", next);
     this.emit();
   }
   private wikiKey(record: RecordItem) {

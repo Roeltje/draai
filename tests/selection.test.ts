@@ -260,6 +260,7 @@ test("preferences and nostalgia persist; API rejects malformed mappings and supp
         ...prefs,
         styleMoods: DEFAULT_PREFERENCES.styleMoods,
         weatherThresholds: DEFAULT_PREFERENCES.weatherThresholds,
+        sideTimer: DEFAULT_PREFERENCES.sideTimer,
       });
       assert.deepEqual(reopened.store.record("demo-1")!.tags, ["nostalgie"]);
     } finally {

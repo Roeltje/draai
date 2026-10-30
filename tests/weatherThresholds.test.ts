@@ -83,16 +83,19 @@ test("upgrade adds only missing thresholds and preserves all custom mood rules a
     assert.deepEqual(service.preferences(), {
       ...preferences,
       weatherThresholds: DEFAULT_WEATHER_THRESHOLDS,
+      sideTimer: DEFAULT_PREFERENCES.sideTimer,
     });
     service.setPreferences({
       ...preferences,
       weatherThresholds: { coldBelow: 3.5, warmFrom: 27 },
+      sideTimer: DEFAULT_PREFERENCES.sideTimer,
     });
     await service.close();
     service = new Service(c);
     assert.deepEqual(service.preferences(), {
       ...preferences,
       weatherThresholds: { coldBelow: 3.5, warmFrom: 27 },
+      sideTimer: DEFAULT_PREFERENCES.sideTimer,
     });
   } finally {
     await service.close();
@@ -151,6 +154,7 @@ test("API validates complete bounded numeric thresholds and keeps them when old 
       assert.deepEqual(reopened.preferences(), {
         ...preferences,
         weatherThresholds: { coldBelow: -40, warmFrom: 50 },
+        sideTimer: DEFAULT_PREFERENCES.sideTimer,
       });
     } finally {
       await reopened.close();
