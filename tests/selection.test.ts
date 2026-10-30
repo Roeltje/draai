@@ -259,6 +259,7 @@ test("preferences and nostalgia persist; API rejects malformed mappings and supp
       assert.deepEqual(reopened.preferences(), {
         ...prefs,
         styleMoods: DEFAULT_PREFERENCES.styleMoods,
+        weatherThresholds: DEFAULT_PREFERENCES.weatherThresholds,
       });
       assert.deepEqual(reopened.store.record("demo-1")!.tags, ["nostalgie"]);
     } finally {

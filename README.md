@@ -13,9 +13,10 @@ De screenshots tonen de fictieve voorbeeldcollectie; er zijn geen persoonlijke c
 ## Wat je ermee kunt
 
 - Platen kiezen op stemming, met instelbare verbanden voor 91 stijlen en 13 genres. Je eigen plaatlabels gaan vóór stijlverbanden, stijlen vóór genres.
+- Inzicht in stijlen zonder stemmingsverband, met aantallen en direct bewerkbare regels.
 - Dagelijks wisselende hoezen om je collectie opnieuw te ontdekken.
 - Luistersessies handmatig bevestigen en bewaren, met notities en statistieken over geregistreerde sessies.
-- Optioneel gemeten weer van Weather Underground gebruiken in zelf ingestelde selectieregels.
+- Optioneel gemeten weer van Weather Underground gebruiken in zelf ingestelde selectieregels, met eigen koud-/warmtegrenzen.
 - Optioneel albumverhalen en muziekkalenderinformatie tonen via exacte Discogs-ID-koppelingen met Wikidata en Wikipedia. Deze functie staat standaard uit.
 - Een sessie tonen op een tweede scherm via `/display` (kioskweergave).
 

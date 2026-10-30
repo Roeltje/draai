@@ -22,9 +22,38 @@ function validatePreferences(
     v.every((m) => moods.includes(m) && m !== "alles") &&
     new Set(v).size === v.length;
   const weather = value.weatherMoods as Record<string, unknown> | undefined;
+  const thresholds = value.weatherThresholds as
+    Record<string, unknown> | undefined;
+  if (
+    thresholds !== undefined &&
+    (!thresholds ||
+      typeof thresholds !== "object" ||
+      Array.isArray(thresholds) ||
+      Object.keys(thresholds).some(
+        (key) => !["coldBelow", "warmFrom"].includes(key),
+      ) ||
+      !["coldBelow", "warmFrom"].every(
+        (key) =>
+          typeof thresholds[key] === "number" &&
+          Number.isFinite(thresholds[key]) &&
+          (thresholds[key] as number) >= -40 &&
+          (thresholds[key] as number) <= 50,
+      ) ||
+      (thresholds.coldBelow as number) >= (thresholds.warmFrom as number))
+  )
+    throw new AppError(
+      400,
+      "Ongeldige temperatuurgrenzen: gebruik waarden tussen -40 en 50, met koud lager dan warm.",
+    );
   if (
     Object.keys(value).some(
-      (k) => !["genreMoods", "styleMoods", "weatherMoods"].includes(k),
+      (k) =>
+        ![
+          "genreMoods",
+          "styleMoods",
+          "weatherMoods",
+          "weatherThresholds",
+        ].includes(k),
     ) ||
     !Array.isArray(value.genreMoods) ||
     value.genreMoods.length > 100 ||
@@ -72,6 +101,7 @@ function validatePreferences(
         }
       : {}),
     weatherMoods: weather,
+    ...(thresholds !== undefined ? { weatherThresholds: thresholds } : {}),
   } as SelectionPreferences;
   if (
     new Set(normalized.genreMoods.map((g) => g.genre.toLocaleLowerCase()))
@@ -80,8 +110,11 @@ function validatePreferences(
     throw new AppError(400, "Gebruik elk genre maar één keer.");
   if (
     normalized.styleMoods &&
-    new Set(normalized.styleMoods.map((rule) => rule.style.toLocaleLowerCase()))
-      .size !== normalized.styleMoods.length
+    new Set(
+      normalized.styleMoods.map((rule) =>
+        rule.style.replace(/\s+/g, " ").toLocaleLowerCase(),
+      ),
+    ).size !== normalized.styleMoods.length
   )
     throw new AppError(400, "Gebruik elke stijl maar één keer.");
   return normalized;

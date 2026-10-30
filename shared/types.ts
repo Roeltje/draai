@@ -5,6 +5,7 @@ export interface SelectionPreferences {
   genreMoods: Array<{ genre: string; moods: Mood[] }>;
   styleMoods?: Array<{ style: string; moods: Mood[] }>;
   weatherMoods: { rain: Mood[]; cold: Mood[]; warm: Mood[] };
+  weatherThresholds?: { coldBelow: number; warmFrom: number };
 }
 export interface Track {
   position: string;

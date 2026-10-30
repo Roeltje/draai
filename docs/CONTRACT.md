@@ -45,3 +45,7 @@ Main scope phases 0/1 fully working, simple tags/weather/display if feasible. No
 - Preferences additionally accept optional `styleMoods:[{style,moods}]` (max 200, case-insensitive unique names). Older clients may omit it without clearing existing styles. Upgrade seeds styles only when the field is missing; explicit empty lists and existing genre/weather rules survive.
 - Defaults adapt the supplied concept to the five supported moods, taking weights >=0.5 as simple mood associations. Unsupported moods and automatic exclusions are not imported. Matching empty style rules deliberately suppress genre fallback; multiple matches do not stack boosts. Internal `warm` remains compatible; visible mood name is Knus.
 - Homepage displays up to two available, fresh LP instances with covers, sorted by ID and advanced daily in Europe/Amsterdam. No extra API calls; one shared sleeve between consecutive days is possible.
+
+## Weather thresholds and style inventory — 30 October 2026
+- Optional preferences.weatherThresholds = {coldBelow,warmFrom}; defaults 10 and 22 °C. Finite numbers in [-40,50], coldBelow<warmFrom. Cold is strictly below, warm inclusive from threshold. Missing field on old clients preserves saved values. Migration adds defaults only if absent. Freshness/opt-in/weights unchanged.
+- Settings inventory counts known styles once per available fresh LP instance, groups normalized case/whitespace, distinguishes mood rules, explicitly empty rules and unmapped styles. Missing styles remain unknown, not covered. Counts reflect unsaved draft while editing.

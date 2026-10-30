@@ -3703,3 +3703,145 @@ h2 {
     width: 100%;
   }
 }
+
+.style-coverage {
+  margin: 25px 0;
+  padding: 22px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.18);
+}
+.style-coverage h3 {
+  margin: 0 0 10px;
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 400;
+}
+.style-coverage h4 {
+  font-size: 13px;
+  margin: 25px 0 9px;
+  font-weight: 500;
+}
+.style-coverage details > summary {
+  cursor: pointer;
+  font-size: 12px;
+  padding: 15px 0;
+}
+.coverage-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 25px;
+  margin: 18px 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+.coverage-counts strong {
+  font-weight: 500;
+  color: var(--ink);
+  font-size: 20px;
+  margin-right: 5px;
+}
+.coverage-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px;
+}
+.coverage-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  border-top: 1px solid var(--line);
+  padding: 12px 0;
+  font-size: 12px;
+}
+.coverage-list small {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  margin-top: 5px;
+}
+.coverage-list button,
+.coverage-more > button,
+.threshold-reset {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  background: transparent;
+  padding: 10px 12px;
+  min-height: 44px;
+  font-size: 10px;
+  line-height: 1.6;
+}
+.coverage-list button {
+  flex-shrink: 0;
+}
+.coverage-more {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.coverage-more .rule-select {
+  min-width: 0;
+}
+.coverage-more > button {
+  flex-shrink: 0;
+}
+.weather-thresholds {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 220px));
+  gap: 18px;
+  margin: 20px 0 12px;
+}
+.weather-thresholds label {
+  font-size: 12px;
+  line-height: 1.7;
+}
+.weather-thresholds input {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: #eae6da;
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+  margin-top: 7px;
+}
+.weather-thresholds input[aria-invalid="true"] {
+  border-color: var(--coral);
+}
+.threshold-reset {
+  text-align: left;
+  margin: 0 0 20px;
+}
+@media (max-width: 600px) {
+  .style-coverage {
+    padding: 18px 14px;
+  }
+  .style-coverage h3 {
+    font-size: 23px;
+  }
+  .coverage-counts {
+    gap: 10px 16px;
+  }
+  .coverage-counts > span {
+    font-size: 10px;
+  }
+  .coverage-counts strong {
+    font-size: 18px;
+  }
+  .coverage-more {
+    flex-direction: column;
+  }
+  .coverage-more > button {
+    width: 100%;
+  }
+  .weather-thresholds {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
