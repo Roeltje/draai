@@ -84,17 +84,25 @@ export class Service {
     this.mode = config.token ? "live" : "demo";
     mkdirSync(config.dataDir, { recursive: true });
     this.store = new Store(join(config.dataDir, `${this.mode}.sqlite`));
-    // Seed once; only add styles when upgrading saved preferences from older versions.
+    // Seed once; add only missing preferences when upgrading older versions.
     const savedPreferences = this.store.get<SelectionPreferences | null>(
       "preferences",
       null,
     );
     if (!savedPreferences)
       this.store.set("preferences", structuredClone(DEFAULT_PREFERENCES));
-    else if (savedPreferences.styleMoods === undefined)
+    else if (
+      savedPreferences.styleMoods === undefined ||
+      savedPreferences.weatherThresholds === undefined
+    )
       this.store.set("preferences", {
         ...savedPreferences,
-        styleMoods: structuredClone(DEFAULT_PREFERENCES.styleMoods),
+        styleMoods:
+          savedPreferences.styleMoods ??
+          structuredClone(DEFAULT_PREFERENCES.styleMoods),
+        weatherThresholds:
+          savedPreferences.weatherThresholds ??
+          structuredClone(DEFAULT_PREFERENCES.weatherThresholds),
       });
     if (this.mode === "demo" && !this.store.records().length)
       demoRecords(this.iso()).forEach((r) => this.store.put(r, this.iso()));
@@ -546,6 +554,8 @@ export class Service {
     this.store.set("preferences", {
       ...preferences,
       styleMoods: preferences.styleMoods ?? this.preferences().styleMoods,
+      weatherThresholds:
+        preferences.weatherThresholds ?? this.preferences().weatherThresholds,
     });
     this.emit();
   }
