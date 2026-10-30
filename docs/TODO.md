@@ -132,3 +132,17 @@ De gebruiker wil direct werkende, voorgevulde style-/genredefaults kunnen tweake
 ## Later: reminders en geschatte speeltijd
 Per kant beschikbare Discogs-tracktijden optellen; gebruiker bevestigt welke kant start. Push na kantduur plus instelbare speling, alleen als nog niet afgemeld; annuleren bij stoppen/omdraaien, snooze en dubbele meldingen voorkomen. Als kantduur ontbreekt maar albumduur betrouwbaar is: optionele albumreminder met speling, duidelijk zo benoemd. Zonder betrouwbare duur geen verzonnen deadline. HTTPS, push-toestemming en serverplanning nodig; iPhone-achtergrondtimer niet als betrouwbare scheduler gebruiken.
 Geschatte speelduur apart van sessietijd: bij bekende gekozen kant/albumduur hoogstens min(geregistreerde verstreken tijd, bekende duur), met expliciete labels en correctiemogelijkheid. Onbekende duur blijft sessietijd, geen gemeten afspeeltijd. Geen automatische claim dat de plaat echt speelde, geen ongevraagd automatisch afronden. Reminder en duurherziening blijven voor later, niet onderdeel van homepage/Knus/stylemapping.
+
+
+## Gemeld in gebruik: Wiki-verrijking hapert — 30 oktober 2026
+
+**W01 · P1 · Onderzoek S / laag–middel; oplossing afhankelijk van oorzaak.** Gebruiker meldt dat de Wiki-koppeling snel een limiet lijkt te bereiken, ondanks rustig zichtbare voortgang. Nog niet vastgesteld of dit HTTP429, een timeout, serverfout, toegangsblokkade of iets anders is. Eerst diagnose, niet blind sneller of trager maken.
+
+- Huidige code: één seriële verrijkingswachtrij met3seconden tussen taken, maar één albumtaak kan meerdere aanvragen doen (Wikidata SPARQL, entiteiten, Wikipedia-album en artiestfragmenten). Binnen zo’n taak slechts250ms na een geslaagd antwoord. Twee pogingen per aanvraag,6seconden timeout per aanvraag en18seconden voor de hele albumtaak. Rustige albumvoortgang bewijst dus geen lage aanvraagsnelheid.
+- Er is30dagen Wiki-/artikelcache en15minuten afkoeling na fouten. HTTP429 en5xx worden opnieuw geprobeerd; Retry-After wordt gelezen, maar een langere wachttijd past niet in het korte taakbudget. Generieke foutmeldingen verbergen nu het onderscheid tussen oorzaken.
+- Eerst beperkte, veilige diagnostiek toevoegen: dienst/endpointcategorie, HTTP-status of API-foutcode, duur, poging, cachetreffer en geplande hervatting. Geen tokens, volledige query-URL’s of persoonlijke collectiegegevens loggen. Concrete foutmelding en tijdstip uit de LXC helpen de eerste diagnose.
+- Apart vaststellen welke dienst hapert: query.wikidata.org, Wikidata API of Wikipedia. Onderzoek gedeeld uitgaand IP, netwerk/DNS, User-Agent/contactgegevens, timeouts en actuele officiële dienstvoorwaarden zodra dit wordt opgepakt; geen limiet of oorzaak aannemen.
+- Daarna gericht beoordelen: begrenzing per dienst op echte aanvragen, gedeelde afkoeling die Retry-After respecteert, exponentieel terugschakelen met jitter, deduplicatie/cache voor terugkerende artiest-ID’s en query-/taakbudget. Actieve plaat prioriteit geven zonder wachttijden te omzeilen.
+- Klaar als een tijdelijke429/503/timeout zichtbaar verschillend wordt behandeld, de queue geen storm van retries veroorzaakt, herstel na wachttijd/herstart werkt en ontbrekende matches niet als tijdelijke storing worden behandeld. Fixtures plus kleine gecontroleerde praktijkproef; geen volledige collectie opnieuw ophalen als test.
+
+Alleen op de todo gezet; geen runtimewijziging of extra live-Wiki-aanvragen in deze ronde.
