@@ -49,3 +49,9 @@ Main scope phases 0/1 fully working, simple tags/weather/display if feasible. No
 ## Weather thresholds and style inventory — 30 October 2026
 - Optional preferences.weatherThresholds = {coldBelow,warmFrom}; defaults 10 and 22 °C. Finite numbers in [-40,50], coldBelow<warmFrom. Cold is strictly below, warm inclusive from threshold. Missing field on old clients preserves saved values. Migration adds defaults only if absent. Freshness/opt-in/weights unchanged.
 - Settings inventory counts known styles once per available fresh LP instance, groups normalized case/whitespace, distinguishes mood rules, explicitly empty rules and unmapped styles. Missing styles remain unknown, not covered. Counts reflect unsaved draft while editing.
+
+## Optional manual side timer — 30 October 2026
+- preferences.sideTimer={enabled,graceMinutes}, default false/3, integer grace 0..30. Omitted fields from old clients preserve preferences. Disable or session finish clears persistent timer; enable never auto-starts.
+- AppState.sideTimer contains the single persisted active-session timer. POST /api/timer takes {action,sessionId,expectedTimerId,targetId?}; start resolves targets server-side, others pause/resume/snooze/dismiss/stop. IDs rotate on mutation; stale commands reject409. Snooze5min; dismiss sticky; start/switch resets.
+- Only complete recognizable A/B/C/etc sides, no missing-track-as-zero or album-halving. Complete consecutive numeric tracklists can provide explicit album fallback. Mixed media, ambiguous positions/index tracks rejected. Track cap3h, targetcap6h. Live start/restart requires fresh basic+detaildata. Started timers retain only generic target label and duration; ordinary expired metadata stays hidden.
+- No audio detection, background push, automatic session finish or changes to registered-time statistics. UI uses absolute timestamps and updates only while relevant panel mounted. Grace changes apply next start.

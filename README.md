@@ -18,6 +18,7 @@ De screenshots tonen de fictieve voorbeeldcollectie; er zijn geen persoonlijke c
 - Luistersessies handmatig bevestigen en bewaren, met notities en statistieken over geregistreerde sessies.
 - Optioneel gemeten weer van Weather Underground gebruiken in zelf ingestelde selectieregels, met eigen koud-/warmtegrenzen.
 - Optioneel albumverhalen en muziekkalenderinformatie tonen via exacte Discogs-ID-koppelingen met Wikidata en Wikipedia. Deze functie staat standaard uit.
+- Een optionele kanttimer met instelbare wachttijd, pauzeren en uitstellen. Standaard uit; je start een kant zelf. De herinnering verschijnt alleen in het luisterscherm, niet als achtergrondmelding.
 - Een sessie tonen op een tweede scherm via `/display` (kioskweergave).
 
 Draai speelt geen muziek af en detecteert geen audio, nummers of draaitafel. Sessieduur is geen gemeten afspeeltijd.

@@ -51,7 +51,7 @@ Homepage: dagelijkse rotatie is gebouwd en getest. Een optionele knop voor nieuw
 | K01 | P1 | Kioskinformatie schalen in lagen | M / middel | Klein hoes/artiest/titel; middel tracks/jaar/label; groot beschikbare credits/weer/geschiedenis. Test circa 540×320, 1024×600 en 1920×1080 én kijkafstand. Geen track/kant tonen alsof gedetecteerd. Geen nieuwe data nodig voor eerste stap. |
 | K02 | P2 | Rustmodus met langzaam wisselende hoezen, weer en aanbeveling | M / middel | Geen actieve sessie; gedeelde rotatie met H01, beperkte beelden, weinig animatie en reduced-motion. Geen stille wijzigingen aan selectie of geschiedenis. |
 | K03 | P2 | Nachtstand en dimmen | S / laag–middel | Begin met instelbaar tijdschema en CSS-dimmen; hardwarehelderheid is aparte integratie. Zonsondergang hangt af van M09. |
-| K04 | P2 | Kanttimer en omdraaiseintje | M / middel | Expliciet kantA/B starten/pauzeren/corrigeren; voortgang en track alleen als schatting. Stiltes/livealbums maken werkelijke naaldpositie onbekend. |
+| K04 | Basis gebouwd, PR #11 | Kanttimer en omdraaiseintje | M / middel | Expliciet kantA/B starten/pauzeren/corrigeren; voortgang en track alleen als schatting. Stiltes/livealbums maken werkelijke naaldpositie onbekend. |
 | K05 | P2 | Vindplaats in de kast | S / laag–middel | Lokaal vrij tekstveld per exemplaar, zichtbaar bij voorstel/kiosk en zoekbaar. Discogs custom-fieldsimport later; geen write-back nodig. |
 | K06 | P3 | Naaldteller met begindatum/startstand/reset | S–M / middel | Voor gebruiker nu lage waarde. Geregistreerde sessietijd hooguit schatting; handmatig corrigeren. Reset via nieuw element bewaren, geen historie weggooien. Onderhoudsgrens zelf instellen. |
 | K07 | P3 | Was-/schoonmaakregistratie | S / laag–middel | Datum en notitie per exemplaar; optionele herinnering, geen verzonnen conditieadvies. |
@@ -129,6 +129,8 @@ Nieuwe scope, modelkeuze en uitgevoerde controles per tranche kort in PROGRESS.m
 ## Bevestigde voorkeuren
 De gebruiker wil direct werkende, voorgevulde style-/genredefaults kunnen tweaken. Geen lege configuratie als eerste ervaring. Extra hardware (microfoon, line-in, camera, smartplugs) blijft P3; PWA-uitbreidingen ook pas later. De eerste versie behoudt handmatig bevestigde luistersessies.
 
-## Later: reminders en geschatte speeltijd
+## Reminders en geschatte speeltijd
 Per kant beschikbare Discogs-tracktijden optellen; gebruiker bevestigt welke kant start. Push na kantduur plus instelbare speling, alleen als nog niet afgemeld; annuleren bij stoppen/omdraaien, snooze en dubbele meldingen voorkomen. Als kantduur ontbreekt maar albumduur betrouwbaar is: optionele albumreminder met speling, duidelijk zo benoemd. Zonder betrouwbare duur geen verzonnen deadline. HTTPS, push-toestemming en serverplanning nodig; iPhone-achtergrondtimer niet als betrouwbare scheduler gebruiken.
 Geschatte speelduur apart van sessietijd: bij bekende gekozen kant/albumduur hoogstens min(geregistreerde verstreken tijd, bekende duur), met expliciete labels en correctiemogelijkheid. Onbekende duur blijft sessietijd, geen gemeten afspeeltijd. Geen automatische claim dat de plaat echt speelde, geen ongevraagd automatisch afronden. Reminder en duurherziening blijven voor later, niet onderdeel van homepage/Knus/stylemapping.
+
+Kanttimerbasis inmiddels gebouwd in PR #11: standaard uit, expliciet starten per kant, instelbare speling en inline seintje met pauze/snooze/dismiss. Push en herziening van geregistreerde speeltijd blijven voor later. Eerst #10 samenvoegen, dan #11 naar main richten en beoordelen.
