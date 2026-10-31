@@ -45,7 +45,7 @@ Draai heeft geen ingebouwde login of toegangsbeheer. Gebruik het op een vertrouw
 
 ## Licentie en gegevens
 
-De broncode is beschikbaar onder de [MIT-licentie](LICENSE). Externe gegevens en diensten, waaronder Discogs, Wikipedia/Wikidata en Weather Underground, vallen onder hun eigen voorwaarden en licenties. Draai toont bronvermelding waar van toepassing; de MIT-licentie geldt niet voor die externe gegevens.
+De broncode is beschikbaar onder de [GNU AGPL-3.0](LICENSE). Je mag Draai gebruiken, aanpassen en verspreiden; wie een aangepaste versie verspreidt of als online dienst aanbiedt, moet de broncode daarvan onder dezelfde licentie beschikbaar stellen. Versies tot en met commit 81f6df1 zijn eerder onder MIT uitgebracht. Externe gegevens en diensten, waaronder Discogs, Wikipedia/Wikidata en Weather Underground, vallen onder hun eigen voorwaarden en licenties. Draai toont bronvermelding waar van toepassing; de AGPL-licentie geldt niet voor die externe gegevens.
 
 ## Meedenken en ontwikkelen
 
