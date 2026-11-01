@@ -1357,7 +1357,9 @@ h2 {
   }
 }
 .display-screen {
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   background: #20221f;
   color: #eee9de;
   padding: 45px 70px;
@@ -2580,20 +2582,9 @@ h2 {
   }
   .display-screen {
     padding: 25px;
-    min-height: 100dvh;
   }
   .display-brand {
     font-size: 40px;
-  }
-  .display-content {
-    grid-template-columns: 1fr;
-    gap: 27px;
-    padding: 35px 0;
-  }
-  .display-content > .cover {
-    max-height: 48vh;
-    max-width: 100%;
-    width: auto;
   }
   .display-content h1 {
     font-size: 49px;
@@ -3999,5 +3990,206 @@ h2 {
   }
   .side-timer-start-button {
     width: 100%;
+  }
+}
+
+.display-content {
+  min-height: 0;
+  padding: 0;
+}
+.display-text {
+  min-width: 0;
+}
+.display-layer-medium,
+.display-layer-large {
+  display: none;
+}
+.display-content h3 {
+  margin: 0;
+  font-size: 0.8em;
+  font-weight: 600;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: #a5a59a;
+}
+.display-content .display-meta {
+  color: #cfcabd;
+  margin: 0 0 1.2vh;
+}
+.display-note {
+  margin: 1.5vh 0 0;
+}
+.display-tracks {
+  columns: 2;
+  column-gap: 40px;
+  font-size: clamp(12px, 1.9vh, 22px);
+  line-height: 1.35;
+}
+.display-tracks section {
+  break-inside: avoid;
+  margin-bottom: 1vh;
+}
+.display-tracks ol {
+  list-style: none;
+  margin: 0.3em 0 0;
+  padding: 0;
+}
+.display-tracks li {
+  display: grid;
+  grid-template-columns: 2.4em 1fr auto;
+  gap: 0.6em;
+}
+.display-tracks li > span:first-child,
+.display-tracks li > span:last-child {
+  color: #a5a59a;
+  font-variant-numeric: tabular-nums;
+}
+.display-content .display-more {
+  column-span: all;
+  color: #a5a59a;
+  font-size: 1em;
+  margin: 0.4vh 0 0;
+}
+.display-extra {
+  font-size: clamp(14px, 2vh, 24px);
+  line-height: 1.4;
+  margin-top: 1.5vh;
+  border-top: 1px solid #53564c;
+  padding-top: 1.5vh;
+}
+.display-extra p {
+  font-size: 1em;
+  margin: 0.4em 0 0;
+}
+.display-credits ul {
+  list-style: none;
+  margin: 0.3em 0 0;
+  padding: 0;
+  columns: 2;
+  column-gap: 40px;
+}
+.display-credits li {
+  break-inside: avoid;
+}
+
+@media (min-width: 900px) and (min-height: 560px) {
+  .display-layer-medium {
+    display: block;
+  }
+  .display-screen {
+    padding: 28px 48px;
+  }
+  .display-brand {
+    font-size: 34px;
+  }
+  .display-content {
+    gap: 40px;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    margin: 0;
+    flex: 1;
+  }
+  .display-content > .cover {
+    max-height: 100%;
+  }
+  .display-content h1 {
+    font-size: clamp(34px, 6vh, 64px);
+    margin: 1vh 0;
+    letter-spacing: -2px;
+  }
+  .display-content h2 {
+    font-size: clamp(18px, 3vh, 30px);
+    margin: 0 0 1.5vh;
+  }
+  .display-content .display-meta {
+    font-size: clamp(13px, 2vh, 22px);
+  }
+  .display-footer {
+    display: none;
+  }
+}
+@media (min-width: 1600px) and (min-height: 900px) {
+  .display-layer-not-large {
+    display: none;
+  }
+  .display-layer-large {
+    display: block;
+  }
+  .display-screen {
+    padding: 40px 70px;
+  }
+  .display-brand {
+    font-size: 44px;
+  }
+  .display-footer {
+    display: flex;
+  }
+  .display-content h1 {
+    font-size: clamp(64px, 8vh, 120px);
+  }
+  .display-content h2 {
+    font-size: clamp(28px, 3.6vh, 44px);
+  }
+  .display-content .eyebrow {
+    font-size: clamp(13px, 1.4vh, 18px);
+  }
+  .display-content .muted,
+  .display-content .source {
+    font-size: clamp(13px, 1.3vh, 17px);
+  }
+  .display-footer {
+    font-size: 12px;
+  }
+}
+@media (max-height: 420px) {
+  .display-screen {
+    padding: 14px 20px;
+  }
+  .display-brand,
+  .display-footer {
+    display: none;
+  }
+  .display-content {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 22px;
+    margin: 0;
+    padding: 0;
+    flex: 1;
+    align-items: center;
+  }
+  .display-content > .cover {
+    max-height: 70vh;
+    max-width: 45vw;
+  }
+  .display-content h1 {
+    font-size: clamp(28px, 11vh, 48px);
+    letter-spacing: -1.5px;
+    margin: 8px 0;
+  }
+  .display-content h2 {
+    font-size: clamp(16px, 6vh, 24px);
+    margin: 0 0 10px;
+  }
+  .display-content p {
+    font-size: 11px;
+  }
+  .display-content .muted,
+  .display-content .source {
+    font-size: 10px;
+    margin: 6px 0 0;
+  }
+}
+@media (max-width: 600px) and (orientation: portrait) {
+  .display-content {
+    grid-template-columns: 1fr;
+    gap: 22px;
+    align-items: start;
+  }
+  .display-content > .cover {
+    max-height: 40vh;
+    max-width: 100%;
+    width: auto;
+  }
+  .display-footer {
+    display: none;
   }
 }
