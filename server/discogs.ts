@@ -95,6 +95,14 @@ export function enrich(record: RecordItem, detail: AnyData): RecordItem {
     notes: detail.notes ?? "",
   };
 }
+export class DiscogsError extends Error {
+  constructor(
+    message: string,
+    public status?: number,
+  ) {
+    super(message);
+  }
+}
 export class DiscogsClient {
   private chain: Promise<void> = Promise.resolve();
   constructor(
@@ -131,12 +139,14 @@ export class DiscogsClient {
         return (await response.json()) as AnyData;
       }
       if (response && response.status !== 429 && response.status < 500)
-        throw new Error(
+        throw new DiscogsError(
           `Discogs-aanvraag mislukt (${response.status}). Controleer configuratie en toegang.`,
+          response.status,
         );
       if (attempt === 2)
-        throw new Error(
+        throw new DiscogsError(
           "Discogs is tijdelijk niet bereikbaar. Probeer later opnieuw.",
+          response?.status,
         );
       const retry = response?.headers.get("Retry-After");
       const seconds = retry ? Number(retry) : NaN;

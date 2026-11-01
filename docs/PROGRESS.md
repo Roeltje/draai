@@ -105,3 +105,8 @@ MIT-licentie, portable ontwikkelinstructies, SECURITY.md, korte LXC-updatehandle
 - Fouten worden nu geclassificeerd (rate limit, onbeschikbaar, timeout, afgewezen, ongeldig) en per poging gelogd zonder URL's, titels of Discogs-ID's. Een afgewezen of ongeldig album krijgt alleen zelf status error met 6 uur uitstel; de wachtrij loopt door.
 - Bronniveau-fouten (429/5xx/timeout, ook bij een samenvatting) geven een afkoeling van 5-60 minuten met één automatische hervatting. Optionele `WIKI_CONTACT` komt in de User-Agent.
 - Entiteit-/SPARQL-caching blijft open. Niet tegen de echte Wikimedia-diensten getest in deze ronde.
+
+## Discogs-details isoleren — 1 november 2026
+- Zelfde patroon als bij de Wiki-fix: een 404/410 voor één release pauzeerde alle detailaanvragen 15 minuten en gooide de wachtrij weg, zonder automatisch hervatten. Daardoor bleven persingsdetails en stijlen langer ontbreken.
+- Nu: 404/410 slaat alleen die release 24 uur over; andere fouten pauzeren de wachtrij 15 minuten en hervatten automatisch, ook na herstart. Logregel per fout zonder ID's of token.
+- 96 tests en typecheck slagen. Niet tegen de echte Discogs-API getest.

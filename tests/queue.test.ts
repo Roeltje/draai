@@ -181,6 +181,44 @@ test("failed detail requests pause the bulk queue and persist a negative backoff
   }
 });
 
+test("a removed release skips only itself while the detail queue continues", async () => {
+  const c = config();
+  const now = instant;
+  const details: number[] = [];
+  const logs: string[] = [];
+  const fetcher = (async (url: unknown) => {
+    const id = Number(new URL(String(url)).pathname.split("/").pop());
+    details.push(id);
+    return id === 1
+      ? json({ message: "Release not found." }, 404)
+      : json({ country: "NL", tracklist: [{ position: "A1", title: "Ok" }] });
+  }) as typeof fetch;
+  let service = new Service(c, {
+    now: () => now,
+    wait: noWait,
+    fetcher,
+    log: (l) => logs.push(l),
+  });
+  try {
+    for (let i = 1; i <= 3; i++) service.store.put(item(i));
+    service.startBackground();
+    await service.waitForBackground();
+    assert.deepEqual(details.sort(), [1, 2, 3]);
+    assert.equal(service.store.get("discogsDetailsRetryAfter", 0), 0);
+    assert.ok(service.store.detailsAt("2") && service.store.detailsAt("3"));
+    assert.equal(service.state().sync.error ?? null, null);
+    assert.deepEqual(logs, ["Discogs: details HTTP 404, release overgeslagen"]);
+    await service.close();
+    service = new Service(c, { now: () => now, wait: noWait, fetcher });
+    service.startBackground();
+    await service.waitForBackground();
+    assert.equal(details.length, 3);
+  } finally {
+    await service.close();
+    rmSync(c.dataDir, { recursive: true, force: true });
+  }
+});
+
 test("select and visible-record endpoints return before deferred remote information completes", async () => {
   const c = config();
   let release!: () => void;
