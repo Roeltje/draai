@@ -1,8 +1,9 @@
 import type { SelectionPreferences } from "./types.ts";
+import { ADDED_STYLE_MOODS } from "./moodDefaultsAdded.ts";
 
 // Adapted from docs/voorstellen/draai-mapping.concept.json: existing moods at >= 0.5.
 // Mood arrays are editable suggestions; concept weights and metadata are not used.
-export const DEFAULT_GENRE_MOODS: SelectionPreferences["genreMoods"] = [
+export const CONCEPT_GENRE_MOODS: SelectionPreferences["genreMoods"] = [
   {
     genre: "Blues",
     moods: ["warm", "nostalgie"],
@@ -57,7 +58,7 @@ export const DEFAULT_GENRE_MOODS: SelectionPreferences["genreMoods"] = [
   },
 ];
 
-export const DEFAULT_STYLE_MOODS: NonNullable<
+export const CONCEPT_STYLE_MOODS: NonNullable<
   SelectionPreferences["styleMoods"]
 > = [
   {
@@ -425,3 +426,61 @@ export const DEFAULT_STYLE_MOODS: NonNullable<
     moods: ["nostalgie", "warm"],
   },
 ];
+
+// Version 2 fills the remaining Discogs genres and styles, so nearly every
+// record starts with a mood. Upgrades add these only where nothing is saved.
+export const MOOD_DEFAULTS_VERSION = 2;
+export const ADDED_GENRE_MOODS: SelectionPreferences["genreMoods"] = [
+  {
+    genre: "Brass & Military",
+    moods: ["nostalgie"],
+  },
+  {
+    genre: "Non-Music",
+    moods: [],
+  },
+];
+export { ADDED_STYLE_MOODS };
+export const DEFAULT_GENRE_MOODS = [
+  ...CONCEPT_GENRE_MOODS,
+  ...ADDED_GENRE_MOODS,
+];
+export const DEFAULT_STYLE_MOODS = [
+  ...CONCEPT_STYLE_MOODS,
+  ...ADDED_STYLE_MOODS,
+];
+
+const ruleKey = (name: string) =>
+  name.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+const withMissing = <T>(saved: T[], added: T[], name: (rule: T) => string) => {
+  // A deliberately emptied list stays empty.
+  if (!saved.length) return saved;
+  const present = new Set(saved.map((rule) => ruleKey(name(rule))));
+  return [
+    ...saved,
+    ...structuredClone(added).filter(
+      (rule) => !present.has(ruleKey(name(rule))),
+    ),
+  ];
+};
+// Adds rules introduced after `fromVersion` without touching saved rules.
+// Concept rules a user removed earlier stay removed.
+export function addMissingMoodDefaults(
+  preferences: SelectionPreferences,
+  fromVersion: number,
+): SelectionPreferences {
+  if (fromVersion >= 2) return preferences;
+  return {
+    ...preferences,
+    genreMoods: withMissing(
+      preferences.genreMoods,
+      ADDED_GENRE_MOODS,
+      (rule) => rule.genre,
+    ),
+    styleMoods: withMissing(
+      preferences.styleMoods ?? [],
+      ADDED_STYLE_MOODS,
+      (rule) => rule.style,
+    ),
+  };
+}

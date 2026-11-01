@@ -13,6 +13,10 @@ import type {
 } from "../shared/types.ts";
 import { WorkQueue } from "./queue.ts";
 import { DEFAULT_PREFERENCES, selectionFactors } from "../shared/selection.ts";
+import {
+  addMissingMoodDefaults,
+  MOOD_DEFAULTS_VERSION,
+} from "../shared/moodDefaults.ts";
 import { timerTargets } from "../shared/sideTimer.ts";
 import { Store } from "./store.ts";
 import { demoRecords } from "./demo.ts";
@@ -94,25 +98,38 @@ export class Service {
       "preferences",
       null,
     );
+    const defaultsVersion = this.store.get<number>(
+      "moodDefaultsVersion",
+      savedPreferences ? 1 : MOOD_DEFAULTS_VERSION,
+    );
     if (!savedPreferences)
       this.store.set("preferences", structuredClone(DEFAULT_PREFERENCES));
     else if (
       savedPreferences.styleMoods === undefined ||
       savedPreferences.weatherThresholds === undefined ||
-      savedPreferences.sideTimer === undefined
+      savedPreferences.sideTimer === undefined ||
+      defaultsVersion < MOOD_DEFAULTS_VERSION
     )
-      this.store.set("preferences", {
-        ...savedPreferences,
-        styleMoods:
-          savedPreferences.styleMoods ??
-          structuredClone(DEFAULT_PREFERENCES.styleMoods),
-        weatherThresholds:
-          savedPreferences.weatherThresholds ??
-          structuredClone(DEFAULT_PREFERENCES.weatherThresholds),
-        sideTimer:
-          savedPreferences.sideTimer ??
-          structuredClone(DEFAULT_PREFERENCES.sideTimer),
-      });
+      this.store.set(
+        "preferences",
+        addMissingMoodDefaults(
+          {
+            ...savedPreferences,
+            styleMoods:
+              savedPreferences.styleMoods ??
+              structuredClone(DEFAULT_PREFERENCES.styleMoods),
+            weatherThresholds:
+              savedPreferences.weatherThresholds ??
+              structuredClone(DEFAULT_PREFERENCES.weatherThresholds),
+            sideTimer:
+              savedPreferences.sideTimer ??
+              structuredClone(DEFAULT_PREFERENCES.sideTimer),
+          },
+          defaultsVersion,
+        ),
+      );
+    if (defaultsVersion < MOOD_DEFAULTS_VERSION || !savedPreferences)
+      this.store.set("moodDefaultsVersion", MOOD_DEFAULTS_VERSION);
     const restoredTimer = this.store.get<SideTimerState | null>(
       "sideTimer",
       null,

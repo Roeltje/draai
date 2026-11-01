@@ -42,7 +42,7 @@ Main scope phases 0/1 fully working, simple tags/weather/display if feasible. No
 - Statistics count completed registered sessions, distinct collection instances, registered session duration and share of available LP instances heard. They do not detect actual listening.
 
 ## Style defaults and homepage rotation — 29 October 2026
-- Preferences additionally accept optional `styleMoods:[{style,moods}]` (max 200, case-insensitive unique names). Older clients may omit it without clearing existing styles. Upgrade seeds styles only when the field is missing; explicit empty lists and existing genre/weather rules survive.
+- Preferences additionally accept optional `styleMoods:[{style,moods}]` (max 1000, case-insensitive unique names). Older clients may omit it without clearing existing styles. Upgrade seeds styles only when the field is missing; explicit empty lists and existing genre/weather rules survive. `moodDefaultsVersion` 2 adds only style/genre defaults introduced after version 1 whose name is not yet saved; changed, disabled and removed rules stay as they are, and an explicitly empty style or genre list stays empty.
 - Defaults adapt the supplied concept to the five supported moods, taking weights >=0.5 as simple mood associations. Unsupported moods and automatic exclusions are not imported. Matching empty style rules deliberately suppress genre fallback; multiple matches do not stack boosts. Internal `warm` remains compatible; visible mood name is Knus.
 - Homepage displays up to two available, fresh LP instances with covers, sorted by ID and advanced daily in Europe/Amsterdam. No extra API calls; one shared sleeve between consecutive days is possible.
 

@@ -4,6 +4,10 @@ import { mkdtempSync, rmSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DEFAULT_PREFERENCES, selectionFactors } from "../shared/selection.ts";
+import {
+  CONCEPT_GENRE_MOODS,
+  CONCEPT_STYLE_MOODS,
+} from "../shared/moodDefaults.ts";
 import { demoRecords } from "../server/demo.ts";
 import { Service } from "../server/service.ts";
 import { Store } from "../server/store.ts";
@@ -53,8 +57,8 @@ test("defaults adapt only existing concept moods at the threshold, excluding emp
     nostalgisch: "nostalgie",
   };
   for (const [source, field, actual] of [
-    [concept.genres, "genre", DEFAULT_PREFERENCES.genreMoods],
-    [concept.styles, "style", DEFAULT_PREFERENCES.styleMoods],
+    [concept.genres, "genre", CONCEPT_GENRE_MOODS],
+    [concept.styles, "style", CONCEPT_STYLE_MOODS],
   ] as const) {
     const expected = Object.entries(source)
       .map(([name, values]) => ({
@@ -198,7 +202,7 @@ test("API validates normalized style rules, preserves overrides for old clients,
         { style: " Ambient", moods: [] },
         { style: "ambient ", moods: [] },
       ],
-      Array.from({ length: 201 }, (_, i) => ({
+      Array.from({ length: 1001 }, (_, i) => ({
         style: `Style ${i}`,
         moods: [],
       })),
@@ -212,7 +216,7 @@ test("API validates normalized style rules, preserves overrides for old clients,
       (
         await patch({
           ...empty,
-          styleMoods: Array.from({ length: 200 }, (_, i) => ({
+          styleMoods: Array.from({ length: 1000 }, (_, i) => ({
             style: `Style ${i}`,
             moods: [],
           })),
