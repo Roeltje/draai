@@ -144,7 +144,7 @@ systemctl restart draai
 systemctl status draai --no-pager
 ```
 
-Een ingevuld Discogs-token schakelt over op de aparte live-database. Zet `WIKI_ENABLED=true` als je de hierboven beschreven Wiki-koppeling wilt gebruiken. Bij een gewijzigd IP/hostnaam pas je ook `APP_ORIGIN` aan. Houd `HOST`, `PORT` en `DATA_DIR` op de bovenstaande waarden voor deze installatie. De updater laat `/etc/draai.env` ongemoeid en verwacht deze `HOST`, `PORT` en `DATA_DIR`-instellingen.
+Een ingevuld Discogs-token schakelt over op de aparte live-database. Zet `WIKI_ENABLED=true` als je de hierboven beschreven Wiki-koppeling wilt gebruiken; vul optioneel ook `WIKI_CONTACT` (URL of e-mailadres) in `/etc/draai.env` in, dat Wikimedia aanbeveelt in de User-Agent. Bij een gewijzigd IP/hostnaam pas je ook `APP_ORIGIN` aan. Houd `HOST`, `PORT` en `DATA_DIR` op de bovenstaande waarden voor deze installatie. De updater laat `/etc/draai.env` ongemoeid en verwacht deze `HOST`, `PORT` en `DATA_DIR`-instellingen.
 
 ### Toegang via een HTTPS-reverse-proxy
 
