@@ -20,6 +20,7 @@ import { KnowledgeClient, KNOWLEDGE_TTL, occasionsFor } from "./knowledge.ts";
 import {
   basicRecord,
   DiscogsClient,
+  DiscogsError,
   enrich,
   stale,
   REFRESH_INTERVAL,
@@ -78,6 +79,8 @@ export class Service {
   private queue: WorkQueue;
   private closing = false;
   private wikiResume: ReturnType<typeof setTimeout> | null = null;
+  private detailsResume: ReturnType<typeof setTimeout> | null = null;
+  private log: (line: string) => void;
   private enrichment: NonNullable<AppState["enrichment"]>;
   constructor(
     public config: Config,
@@ -86,6 +89,7 @@ export class Service {
     this.now = deps.now ?? Date.now;
     this.random = deps.random ?? Math.random;
     this.fetcher = deps.fetcher ?? fetch;
+    this.log = deps.log ?? ((l) => console.warn(l));
     this.mode = config.token ? "live" : "demo";
     mkdirSync(config.dataDir, { recursive: true });
     this.store = new Store(join(config.dataDir, `${this.mode}.sqlite`));
@@ -703,11 +707,25 @@ export class Service {
   }
   startBackground() {
     if (this.closing || this.mode === "demo") return;
-    for (const record of this.store.records().filter((r) => r.available)) {
-      if (!this.store.detailsAt(record.id)) this.queueDetails(record, 0);
-    }
+    this.queueAllDetails();
     this.queueAllWiki();
     this.refreshActive();
+  }
+  private queueAllDetails() {
+    // A persisted pause survives restarts; resume when it ends.
+    const retryAfter = this.store.get<number>("discogsDetailsRetryAfter", 0);
+    if (retryAfter > this.now())
+      return this.scheduleDetailsResume(retryAfter - this.now());
+    for (const record of this.store.records().filter((r) => r.available))
+      if (!this.store.detailsAt(record.id)) this.queueDetails(record, 0);
+  }
+  private scheduleDetailsResume(cooldown: number) {
+    if (this.detailsResume || this.closing) return;
+    this.detailsResume = setTimeout(() => {
+      this.detailsResume = null;
+      if (!this.closing && this.mode !== "demo") this.queueAllDetails();
+    }, cooldown);
+    this.detailsResume.unref();
   }
   private queueAllWiki() {
     if (!this.config.wikiEnabled) return;
@@ -753,12 +771,23 @@ export class Service {
           .filter((r) => r.releaseId === record.releaseId))
           this.store.put(enrich(current, detail), this.iso());
         this.store.set(`backoff:${key}`, 0);
-      } catch {
-        this.store.set(`backoff:${key}`, this.now() + 15 * 60000);
-        this.store.set("discogsDetailsRetryAfter", this.now() + 15 * 60000);
-        this.queue.cancel("details:");
-        this.sync.error =
-          "Releasegegevens tijdelijk niet bereikbaar; later opnieuw.";
+      } catch (e) {
+        const status = e instanceof DiscogsError ? e.status : undefined;
+        // A removed or unknown release only skips that release; the queue continues.
+        if (status === 404 || status === 410) {
+          this.log(`Discogs: details HTTP ${status}, release overgeslagen`);
+          this.store.set(`backoff:${key}`, this.now() + 24 * 3600000);
+        } else {
+          this.log(
+            `Discogs: details ${status ? `HTTP ${status}` : "niet bereikbaar"}, wachtrij 15 min gepauzeerd`,
+          );
+          this.store.set(`backoff:${key}`, this.now() + 15 * 60000);
+          this.store.set("discogsDetailsRetryAfter", this.now() + 15 * 60000);
+          this.queue.cancel("details:");
+          this.scheduleDetailsResume(15 * 60000);
+          this.sync.error =
+            "Releasegegevens tijdelijk niet bereikbaar; hervat automatisch.";
+        }
       }
       this.emit();
     });
@@ -870,6 +899,8 @@ export class Service {
   async close() {
     this.closing = true;
     if (this.wikiResume) clearTimeout(this.wikiResume);
+    if (this.detailsResume) clearTimeout(this.detailsResume);
+    this.detailsResume = null;
     this.wikiResume = null;
     await this.queue.close();
     await this.syncTask;
