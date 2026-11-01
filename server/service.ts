@@ -34,12 +34,14 @@ export interface Config {
   origin?: string;
   production?: boolean;
   wikiEnabled?: boolean;
+  wikiContact?: string;
 }
 export interface Dependencies {
   now?: () => number;
   random?: () => number;
   fetcher?: typeof fetch;
   wait?: (ms: number) => Promise<void>;
+  log?: (line: string) => void;
 }
 type SelectionRow = {
   id: string;
@@ -75,6 +77,7 @@ export class Service {
   private knowledge: KnowledgeClient;
   private queue: WorkQueue;
   private closing = false;
+  private wikiResume: ReturnType<typeof setTimeout> | null = null;
   private enrichment: NonNullable<AppState["enrichment"]>;
   constructor(
     public config: Config,
@@ -138,6 +141,8 @@ export class Service {
       deps.wait,
       this.now,
       this.store,
+      deps.log,
+      config.wikiContact,
     );
     this.enrichment = this.store.get("enrichment", {
       running: false,
@@ -700,9 +705,26 @@ export class Service {
     if (this.closing || this.mode === "demo") return;
     for (const record of this.store.records().filter((r) => r.available)) {
       if (!this.store.detailsAt(record.id)) this.queueDetails(record, 0);
-      if (this.config.wikiEnabled) void this.queueWiki(record, 0);
     }
+    this.queueAllWiki();
     this.refreshActive();
+  }
+  private queueAllWiki() {
+    if (!this.config.wikiEnabled) return;
+    // A persisted cooldown survives restarts; resume when it ends.
+    const retryAfter = this.store.get<number>("wikiRetryAfter", 0);
+    if (retryAfter > this.now())
+      return this.scheduleWikiResume(retryAfter - this.now());
+    for (const record of this.store.records().filter((r) => r.available))
+      void this.queueWiki(record, 0);
+  }
+  private scheduleWikiResume(cooldown: number) {
+    if (this.wikiResume || this.closing) return;
+    this.wikiResume = setTimeout(() => {
+      this.wikiResume = null;
+      if (!this.closing) this.queueAllWiki();
+    }, cooldown);
+    this.wikiResume.unref();
   }
   refreshActive() {
     const state = this.state();
@@ -751,6 +773,11 @@ export class Service {
       return Promise.resolve();
     if (this.store.get<number>("wikiRetryAfter", 0) > this.now())
       return Promise.resolve();
+    if (
+      this.store.get<number>(`wikiBackoff:${this.wikiKey(record)}`, 0) >
+      this.now()
+    )
+      return Promise.resolve();
     const cached = record.albumInfo;
     const ttl = cached?.status === "error" ? 15 * 60000 : KNOWLEDGE_TTL;
     if (
@@ -784,23 +811,37 @@ export class Service {
         this.enrichment.running = true;
         this.enrichment.progress = "Album- en artiestbronnen ophalen…";
         this.emit();
-        const albumInfo = await this.knowledge.lookup(current);
-        if (albumInfo.status === "error") {
-          this.store.set("wikiRetryAfter", this.now() + 15 * 60000);
+        const { info: albumInfo, failure } =
+          await this.knowledge.lookupDetailed(current);
+        const service =
+          failure?.kind === "rate_limit" ||
+          failure?.kind === "unavailable" ||
+          failure?.kind === "timeout";
+        if (failure && service) {
+          const cooldown =
+            failure.kind === "rate_limit"
+              ? Math.min(
+                  60 * 60000,
+                  Math.max(5 * 60000, failure.retryAfterMs ?? 5 * 60000),
+                )
+              : 5 * 60000;
+          this.store.set("wikiRetryAfter", this.now() + cooldown);
           this.queue.cancel("wiki:");
-        }
+          this.scheduleWikiResume(cooldown);
+        } else if (albumInfo.status === "error")
+          this.store.set(`wikiBackoff:${currentKey}`, this.now() + 6 * 3600000);
         for (const target of this.store
           .records()
           .filter((r) => this.wikiKey(r) === currentKey))
           this.store.put({ ...target, albumInfo });
         this.enrichment.running = false;
-        this.enrichment.error =
-          albumInfo.status === "error"
-            ? "Wiki-bronnen tijdelijk niet bereikbaar."
-            : null;
-        this.enrichment.progress =
-          albumInfo.status === "error"
-            ? "Bronnen later opnieuw proberen"
+        this.enrichment.error = service
+          ? "Wiki-bronnen tijdelijk overbelast of onbereikbaar; hervat automatisch."
+          : null;
+        this.enrichment.progress = service
+          ? "Bronnen later opnieuw proberen"
+          : albumInfo.status === "error"
+            ? "Album- en artiestbronnen bijgewerkt (1 album overgeslagen)"
             : "Album- en artiestbronnen bijgewerkt";
         if (albumInfo.status !== "error")
           this.enrichment.lastSuccess = this.iso();
@@ -828,6 +869,8 @@ export class Service {
   }
   async close() {
     this.closing = true;
+    if (this.wikiResume) clearTimeout(this.wikiResume);
+    this.wikiResume = null;
     await this.queue.close();
     await this.syncTask;
     this.store.close();

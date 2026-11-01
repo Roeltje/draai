@@ -59,7 +59,33 @@ export function exactDates(
   return kind !== "release" && unique.length > 1 ? [] : unique;
 }
 
+export type WikiFailure = {
+  kind: "rate_limit" | "unavailable" | "timeout" | "rejected" | "invalid";
+  service: "wdqs" | "wikidata" | "wikipedia";
+  status?: number;
+  retryAfterMs?: number;
+};
+export class WikiError extends Error {
+  constructor(public failure: WikiFailure) {
+    super(`Wiki-aanvraag mislukt (${failure.kind})`);
+  }
+}
+const serviceOf = (url: string): WikiFailure["service"] => {
+  const host = new URL(url).hostname;
+  return host === "query.wikidata.org"
+    ? "wdqs"
+    : host.endsWith("wikipedia.org")
+      ? "wikipedia"
+      : "wikidata";
+};
+const soft = (f?: WikiFailure) =>
+  f?.kind === "rate_limit" ||
+  f?.kind === "unavailable" ||
+  f?.kind === "timeout";
+
 export class KnowledgeClient {
+  private lastService: WikiFailure["service"] = "wikidata";
+  private userAgent: string;
   constructor(
     private fetcher: typeof fetch = fetch,
     private wait: (ms: number) => Promise<void> = (ms) =>
@@ -69,7 +95,19 @@ export class KnowledgeClient {
       get<T>(key: string, fallback: T): T;
       set(key: string, value: unknown): void;
     },
-  ) {}
+    private log: (line: string) => void = (l) => console.warn(l),
+    contact?: string,
+  ) {
+    const clean = (contact ?? "")
+      // eslint-disable-next-line no-control-regex
+      .replace(/[\u0000-\u001f\u007f-\u009f()]/g, "")
+      .trim()
+      .slice(0, 200)
+      .trim();
+    this.userAgent = clean
+      ? `Draai/0.1 (${clean}; personal music collection)`
+      : "Draai/0.1 (personal music collection; source-linked research)";
+  }
   private async excerpt(language: string, title: string, deadline: number) {
     const key = `wikiExcerpt:${language}:${title}`;
     const cached = this.cache?.get<{
@@ -110,26 +148,48 @@ export class KnowledgeClient {
     return result;
   }
   private async get(url: string, deadline: number): Promise<Data> {
+    const service = serviceOf(url);
+    this.lastService = service;
+    const fail = (
+      failure: WikiFailure,
+      attempt: number,
+      started: number,
+      note = "",
+    ) => {
+      const what = failure.status
+        ? `HTTP ${failure.status} (${failure.kind})`
+        : failure.kind;
+      this.log(
+        `Wiki: ${service} ${what} poging ${attempt + 1}/2, ${Math.max(0, this.now() - started)} ms${note}`,
+      );
+      return new WikiError(failure);
+    };
     for (let attempt = 0; attempt < 2; attempt++) {
-      const remaining = deadline - this.now();
-      if (remaining <= 0) throw new Error("Wiki-timeout");
+      const started = this.now();
+      const remaining = deadline - started;
+      if (remaining <= 0)
+        throw fail({ kind: "timeout", service }, attempt, started);
       const response = await this.fetcher(url, {
-        headers: {
-          "User-Agent":
-            "Draai/0.1 (personal music collection; source-linked research)",
-          Accept: "application/json",
-        },
+        headers: { "User-Agent": this.userAgent, Accept: "application/json" },
         signal: AbortSignal.timeout(Math.min(6000, remaining)),
       }).catch(() => null);
       if (response?.ok) {
-        const data = (await response.json()) as Data;
-        if (data.error) throw new Error("Wiki-aanvraag mislukt");
+        let data: Data;
+        try {
+          data = (await response.json()) as Data;
+        } catch {
+          throw fail({ kind: "invalid", service }, attempt, started);
+        }
+        if (!data || typeof data !== "object")
+          throw fail({ kind: "invalid", service }, attempt, started);
+        if (data.error)
+          throw fail({ kind: "rejected", service }, attempt, started);
         await this.wait(250);
         return data;
       }
-      if (response && response.status !== 429 && response.status < 500)
-        throw new Error("Wiki-aanvraag mislukt");
-      if (attempt === 1) throw new Error("Wiki tijdelijk niet bereikbaar");
+      const status = response?.status;
+      if (response && status !== 429 && status! < 500)
+        throw fail({ kind: "rejected", service, status }, attempt, started);
       const header = response?.headers.get("Retry-After");
       const seconds = Number(header);
       const retry = !header
@@ -137,14 +197,33 @@ export class KnowledgeClient {
         : Number.isFinite(seconds)
           ? seconds * 1000
           : Date.parse(header) - this.now();
+      const retryAfterMs =
+        status === 429 && header && Number.isFinite(retry)
+          ? Math.max(0, retry)
+          : undefined;
+      const failure: WikiFailure = !response
+        ? { kind: "timeout", service }
+        : status === 429
+          ? { kind: "rate_limit", service, status, retryAfterMs }
+          : { kind: "unavailable", service, status };
+      const note =
+        retryAfterMs !== undefined
+          ? `, Retry-After ${Math.round(retryAfterMs / 1000)} s`
+          : "";
+      const error = fail(failure, attempt, started, note);
+      if (attempt === 1) throw error;
       const delay = Math.max(500, Number.isFinite(retry) ? retry : 1000);
-      if (delay >= deadline - this.now())
-        throw new Error("Wiki vraagt om later opnieuw te proberen");
+      if (delay >= deadline - this.now()) throw error;
       await this.wait(delay);
     }
-    throw new Error("Wiki tijdelijk niet bereikbaar");
+    throw new WikiError({ kind: "unavailable", service });
   }
   async lookup(record: RecordItem): Promise<AlbumInfo> {
+    return (await this.lookupDetailed(record)).info;
+  }
+  async lookupDetailed(
+    record: RecordItem,
+  ): Promise<{ info: AlbumInfo; failure?: WikiFailure }> {
     const checkedAt = new Date(this.now()).toISOString();
     const empty = (status: AlbumInfo["status"]): AlbumInfo => ({
       status,
@@ -164,15 +243,33 @@ export class KnowledgeClient {
         .slice(0, 12)
         .map((id) => ({ property: "P1953", id })),
     ];
-    if (!ids.length) return empty("not_found");
+    const done = (info: AlbumInfo, failure?: WikiFailure) => ({
+      info,
+      failure,
+    });
+    if (!ids.length) return done(empty("not_found"));
+    let excerptFailure: WikiFailure | undefined;
+    // After a service-level excerpt failure the remaining excerpts are skipped.
+    const tryExcerpt = async (language: string, title: string) => {
+      if (excerptFailure) return null;
+      try {
+        return await this.excerpt(language, title, deadline);
+      } catch (e) {
+        if (e instanceof WikiError && soft(e.failure))
+          excerptFailure = e.failure;
+        return null;
+      }
+    };
     const deadline = this.now() + 18000;
     try {
       const query = `SELECT DISTINCT ?property ?discogsId ?entity WHERE { VALUES (?property ?discogsId) { ${ids.map((x) => `(wdt:${x.property} "${x.id}")`).join(" ")} } ?entity ?property ?discogsId . } LIMIT 100`;
       const url = new URL("https://query.wikidata.org/sparql");
       url.search = new URLSearchParams({ query, format: "json" }).toString();
       const matches = await this.get(url.toString(), deadline);
-      if (!Array.isArray(matches.results?.bindings))
-        throw new Error("Ongeldig Wiki-antwoord");
+      if (!Array.isArray(matches.results?.bindings)) {
+        this.log("Wiki: wdqs ongeldig antwoord (invalid)");
+        throw new WikiError({ kind: "invalid", service: "wdqs" });
+      }
       const grouped = new Map<string, Set<string>>();
       for (const b of matches.results.bindings) {
         const p = String(b.property?.value ?? "")
@@ -195,10 +292,12 @@ export class KnowledgeClient {
         .filter(([, set]) => set.size === 1)
         .map(([key, set]) => ({ key, id: [...set][0] }));
       if (!exact.length)
-        return empty(
-          [...grouped.values()].some((s) => s.size > 1)
-            ? "ambiguous"
-            : "not_found",
+        return done(
+          empty(
+            [...grouped.values()].some((s) => s.size > 1)
+              ? "ambiguous"
+              : "not_found",
+          ),
         );
       const qids = [...new Set(exact.map((x) => x.id))];
       const entityUrl = new URL("https://www.wikidata.org/w/api.php");
@@ -252,7 +351,7 @@ export class KnowledgeClient {
           );
         }
       }
-      if (!first) return empty("not_found");
+      if (!first) return done(empty("not_found"));
       const info: AlbumInfo = {
         ...empty("ready"),
         wikidataUrl: `https://www.wikidata.org/wiki/${(album ?? first).id}`,
@@ -267,13 +366,12 @@ export class KnowledgeClient {
             : "";
         const title = album.sitelinks?.[`${language}wiki`]?.title;
         if (language && typeof title === "string") {
-          try {
-            const excerpt = await this.excerpt(language, title, deadline);
+          // Structured verified dates remain usable when the excerpt fails.
+          const excerpt = await tryExcerpt(language, title);
+          if (excerpt) {
             info.summary = excerpt.summary;
             info.language = excerpt.language;
             info.wikipediaUrl = excerpt.wikipediaUrl;
-          } catch {
-            /* Structured verified dates remain usable when the excerpt fails. */
           }
         }
       }
@@ -295,20 +393,23 @@ export class KnowledgeClient {
             : "";
         const title = artist.entity.sitelinks?.[`${language}wiki`]?.title;
         if (language && typeof title === "string") {
-          try {
-            const excerpt = await this.excerpt(language, title, deadline);
+          // One artist outage never removes verified album facts.
+          const excerpt = await tryExcerpt(language, title);
+          if (excerpt) {
             story.summary = excerpt.summary;
             story.language = excerpt.language;
             story.wikipediaUrl = excerpt.wikipediaUrl;
-          } catch {
-            /* One artist outage never removes verified album facts. */
           }
         }
         artists.push(story);
       }
-      return info;
-    } catch {
-      return empty("error");
+      return done(info, excerptFailure);
+    } catch (e) {
+      const failure =
+        e instanceof WikiError
+          ? e.failure
+          : ({ kind: "invalid", service: this.lastService } as WikiFailure);
+      return done(empty("error"), failure);
     }
   }
 }

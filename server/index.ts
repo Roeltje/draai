@@ -32,6 +32,7 @@ const { app } = await buildApp({
   origin: process.env.APP_ORIGIN?.trim() || undefined,
   production: process.env.NODE_ENV === "production",
   wikiEnabled: process.env.WIKI_ENABLED === "true",
+  wikiContact: process.env.WIKI_CONTACT?.trim() || undefined,
 });
 const port = Number(process.env.PORT ?? 3210);
 const host = process.env.HOST ?? "127.0.0.1";

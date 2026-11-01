@@ -588,3 +588,171 @@ test("live enrichment needs explicit opt-in and disabled endpoints make no outgo
     cleanup();
   }
 });
+
+const silent = () => {};
+const twoRecords = () => {
+  const a = { ...record(), id: "a-1" };
+  const b = {
+    ...record(),
+    id: "b-1",
+    masterId: 456,
+    artistIds: [77],
+    releaseId: 9999,
+  };
+  return [a, b];
+};
+
+test("an album-level rejection does not stop the queue and is backed off", async () => {
+  const { config, cleanup } = setup();
+  const requested: string[] = [];
+  let t = now;
+  const service = new Service(
+    { ...config, token: "fixture", wikiEnabled: true },
+    {
+      now: () => t,
+      wait: noWait,
+      log: silent,
+      fetcher: fetcher((url) => {
+        if (url.hostname === "query.wikidata.org") {
+          const q = url.searchParams.get("query")!;
+          requested.push(q.includes('"123"') ? "a" : "b");
+          return response({
+            results: {
+              bindings: q.includes('"123"')
+                ? [binding("P1954", "123", "Q100")]
+                : [binding("P1954", "456", "Q300")],
+            },
+          });
+        }
+        if (url.hostname === "www.wikidata.org") {
+          if (url.searchParams.get("ids") === "Q100") return response({}, 400);
+          return response({
+            entities: {
+              Q300: {
+                id: "Q300",
+                claims: {
+                  P1954: [
+                    {
+                      rank: "normal",
+                      mainsnak: { datavalue: { value: "456" } },
+                    },
+                  ],
+                },
+              },
+            },
+          });
+        }
+        return response({ query: { pages: [{ extract: "" }] } });
+      }),
+    },
+  );
+  try {
+    const [a, b] = twoRecords();
+    service.store.put(a);
+    service.store.put(b);
+    await service.enrichRecords();
+    assert.ok(!service.store.get<number>("wikiRetryAfter", 0));
+    assert.equal(service.store.record("a-1")!.albumInfo!.status, "error");
+    assert.equal(service.store.record("b-1")!.albumInfo!.status, "ready");
+    assert.equal(service.state().enrichment!.error, null);
+    t = now + 20 * 60000;
+    await service.enrichRecords();
+    assert.equal(requested.filter((x) => x === "a").length, 1);
+  } finally {
+    await service.close();
+    cleanup();
+  }
+});
+
+test("a 429 sets a clamped service cooldown and cancels remaining jobs", async () => {
+  const { config, cleanup } = setup();
+  let calls = 0;
+  const service = new Service(
+    { ...config, token: "fixture", wikiEnabled: true },
+    {
+      now: () => now,
+      wait: noWait,
+      log: silent,
+      fetcher: fetcher(() => {
+        calls++;
+        return new Response("{}", {
+          status: 429,
+          headers: { "Retry-After": "120" },
+        });
+      }),
+    },
+  );
+  try {
+    const [a, b] = twoRecords();
+    service.store.put(a);
+    service.store.put(b);
+    await service.enrichRecords();
+    assert.equal(service.store.get("wikiRetryAfter", 0), now + 5 * 60000);
+    assert.equal(service.store.record("b-1")!.albumInfo, undefined);
+    assert.ok(calls <= 2);
+    assert.match(service.state().enrichment!.error!, /hervat automatisch/);
+  } finally {
+    await service.close();
+    cleanup();
+  }
+});
+
+test("failure logs name the service and status but never leak request data", async () => {
+  const lines: string[] = [];
+  const client = new KnowledgeClient(
+    fetcher(() => response({}, 429)),
+    noWait,
+    () => now,
+    undefined,
+    (l) => lines.push(l),
+  );
+  const result = await client.lookupDetailed(record());
+  assert.equal(result.info.status, "error");
+  assert.equal(result.failure!.kind, "rate_limit");
+  assert.equal(result.failure!.service, "wdqs");
+  assert.ok(lines.length >= 1);
+  for (const line of lines) {
+    assert.match(line, /wdqs/);
+    assert.match(line, /429/);
+    assert.doesNotMatch(line, /https?:|\?|query|\b123\b|\b42\b/i);
+  }
+});
+
+test("contact is placed in the User-Agent, otherwise the old one is kept", async () => {
+  const agents: string[] = [];
+  const f = fetcher(() => response({ results: { bindings: [] } }));
+  const spy = ((url: unknown, init?: RequestInit) => {
+    agents.push(
+      String((init?.headers as Record<string, string>)["User-Agent"]),
+    );
+    return f(url as string, init);
+  }) as typeof fetch;
+  await new KnowledgeClient(
+    spy,
+    noWait,
+    () => now,
+    undefined,
+    silent,
+    " (me@example.nl)\n",
+  ).lookup(record());
+  await new KnowledgeClient(spy, noWait, () => now, undefined, silent).lookup(
+    record(),
+  );
+  await new KnowledgeClient(
+    spy,
+    noWait,
+    () => now,
+    undefined,
+    silent,
+    "()",
+  ).lookup(record());
+  assert.equal(
+    agents[0],
+    "Draai/0.1 (me@example.nl; personal music collection)",
+  );
+  assert.match(
+    agents[1],
+    /^Draai\/0\.1 \(personal music collection; source-linked/,
+  );
+  assert.equal(agents[2], agents[1]);
+});
