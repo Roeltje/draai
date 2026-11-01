@@ -54,3 +54,9 @@ De tijdens de browsercontrole gemaakte testgeschiedenis is uit de opgeleverde de
 - Geen echte Discogs-/WU-accountoproepen of LXC-update uitgevoerd in deze ronde. GitHub-regel wel opgeslagen maar niet afgedwongen zolang dit private repositoryplan dat niet ondersteunt; secret scanning/push protection na openbaar maken opnieuw controleren.
 
 - Gebruikersbevestiging na publicatie: eigen Ubuntu 26.04-LXC bijgewerkt en app nog bereikbaar. De specifieke server is niet door de ontwikkelagent geïnspecteerd.
+
+## Temperatuurgrenzen en stijlinventaris — 30 oktober 2026
+Gerichte selectie-/API-/migratietests controleren standaardwaarden, grenswaarden, foutieve/lege invoer, oudere clients en herstartbehoud. Inventaris-tests controleren casing/spaties, dubbele labels per exemplaar, expliciet lege regels, frequenties en ontbrekende/verlopen data. Mobiele browsercontrole: fictieve Voorbeeldstijl tweemaal geteld, regel aangemaakt met Knus, koudegrens leeg blokkeert bewaren, 7/24 °C opgeslagen en na herladen behouden. Alleen tijdelijke demodata aangepast.
+
+## Kanttimer
+91/91 tests inclusief parser, foutgevallen, persistentie, disable/reenable, stale commands, serverherstart, API-validatie en SSE geslaagd met @fastify/static10.1.7. Typecheck en build groen. Mobiele browserflow voor pauze/hervatten, snooze, wisselen, herladen en uitschakelen gecontroleerd met versnelde fictieve tracktijden; geen echte luisterduur als gemeten feit gepresenteerd. Geschiedenisflow blijft werken.

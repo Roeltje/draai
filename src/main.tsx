@@ -33,6 +33,8 @@ import { BrandStar } from "./BrandStar";
 import { SeasonEditor } from "./SeasonEditor";
 import { ListeningStats } from "./ListeningStatsPanel";
 import { formatRegisteredDuration } from "./listeningStats";
+import { SideTimerPanel } from "./SideTimerPanel";
+import { DEFAULT_SIDE_TIMER_SETTINGS } from "../shared/sideTimer";
 import { PreferencesEditor } from "./PreferencesEditor";
 import { homeCovers } from "./homeCovers";
 import { protectState, nextExpiry, recordExpired } from "./freshness";
@@ -1096,6 +1098,21 @@ function App() {
                         <span className="no-track">Geen trackdetectie</span>
                       </div>
                       {detailNotice}
+                      {state.preferences?.sideTimer?.enabled && (
+                        <SideTimerPanel
+                          record={active.record}
+                          sessionId={active.id}
+                          timer={state.sideTimer || null}
+                          graceMinutes={
+                            (
+                              state.preferences.sideTimer ||
+                              DEFAULT_SIDE_TIMER_SETTINGS
+                            ).graceMinutes
+                          }
+                          disabled={actionDisabled}
+                          onCommand={(body) => mutate("/api/timer", body)}
+                        />
+                      )}
                       {storyFor(active.record)}
                       <details className="detail-section" open>
                         <summary>
@@ -1645,6 +1662,7 @@ function App() {
                   </section>
                   <PreferencesEditor
                     preferences={state.preferences}
+                    records={records}
                     styles={[
                       ...new Set(records.flatMap((record) => record.styles)),
                     ].sort((a, b) => a.localeCompare(b, "nl"))}

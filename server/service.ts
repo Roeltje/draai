@@ -9,9 +9,11 @@ import type {
   WeatherState,
   Season,
   SelectionPreferences,
+  SideTimerState,
 } from "../shared/types.ts";
 import { WorkQueue } from "./queue.ts";
 import { DEFAULT_PREFERENCES, selectionFactors } from "../shared/selection.ts";
+import { timerTargets } from "../shared/sideTimer.ts";
 import { Store } from "./store.ts";
 import { demoRecords } from "./demo.ts";
 import { KnowledgeClient, KNOWLEDGE_TTL, occasionsFor } from "./knowledge.ts";
@@ -32,12 +34,14 @@ export interface Config {
   origin?: string;
   production?: boolean;
   wikiEnabled?: boolean;
+  wikiContact?: string;
 }
 export interface Dependencies {
   now?: () => number;
   random?: () => number;
   fetcher?: typeof fetch;
   wait?: (ms: number) => Promise<void>;
+  log?: (line: string) => void;
 }
 type SelectionRow = {
   id: string;
@@ -73,6 +77,7 @@ export class Service {
   private knowledge: KnowledgeClient;
   private queue: WorkQueue;
   private closing = false;
+  private wikiResume: ReturnType<typeof setTimeout> | null = null;
   private enrichment: NonNullable<AppState["enrichment"]>;
   constructor(
     public config: Config,
@@ -84,18 +89,42 @@ export class Service {
     this.mode = config.token ? "live" : "demo";
     mkdirSync(config.dataDir, { recursive: true });
     this.store = new Store(join(config.dataDir, `${this.mode}.sqlite`));
-    // Seed once; only add styles when upgrading saved preferences from older versions.
+    // Seed once; add only missing preferences when upgrading older versions.
     const savedPreferences = this.store.get<SelectionPreferences | null>(
       "preferences",
       null,
     );
     if (!savedPreferences)
       this.store.set("preferences", structuredClone(DEFAULT_PREFERENCES));
-    else if (savedPreferences.styleMoods === undefined)
+    else if (
+      savedPreferences.styleMoods === undefined ||
+      savedPreferences.weatherThresholds === undefined ||
+      savedPreferences.sideTimer === undefined
+    )
       this.store.set("preferences", {
         ...savedPreferences,
-        styleMoods: structuredClone(DEFAULT_PREFERENCES.styleMoods),
+        styleMoods:
+          savedPreferences.styleMoods ??
+          structuredClone(DEFAULT_PREFERENCES.styleMoods),
+        weatherThresholds:
+          savedPreferences.weatherThresholds ??
+          structuredClone(DEFAULT_PREFERENCES.weatherThresholds),
+        sideTimer:
+          savedPreferences.sideTimer ??
+          structuredClone(DEFAULT_PREFERENCES.sideTimer),
       });
+    const restoredTimer = this.store.get<SideTimerState | null>(
+      "sideTimer",
+      null,
+    );
+    if (
+      restoredTimer &&
+      (!this.preferences().sideTimer?.enabled ||
+        !this.store.db
+          .prepare("SELECT id FROM sessions WHERE id=? AND ended_at IS NULL")
+          .get(restoredTimer.sessionId))
+    )
+      this.store.set("sideTimer", null);
     if (this.mode === "demo" && !this.store.records().length)
       demoRecords(this.iso()).forEach((r) => this.store.put(r, this.iso()));
     if (this.mode === "demo" && this.store.get("demoKnowledgeVersion", 0) < 1) {
@@ -112,6 +141,8 @@ export class Service {
       deps.wait,
       this.now,
       this.store,
+      deps.log,
+      config.wikiContact,
     );
     this.enrichment = this.store.get("enrichment", {
       running: false,
@@ -230,6 +261,7 @@ export class Service {
       sync: { ...this.sync },
       weather,
       preferences: this.preferences(),
+      sideTimer: this.currentTimer(sessions.find((s) => !s.ended_at)?.id),
       occasions: occasionsFor(records, this.now()),
       enrichment: { ...this.enrichment },
       settings: {
@@ -397,6 +429,7 @@ export class Service {
     this.store.db
       .prepare("UPDATE sessions SET ended_at=?,note=? WHERE id=?")
       .run(this.iso(), note ?? "", sessionId);
+    this.store.set("sideTimer", null);
     this.emit();
   }
   patch(
@@ -546,7 +579,117 @@ export class Service {
     this.store.set("preferences", {
       ...preferences,
       styleMoods: preferences.styleMoods ?? this.preferences().styleMoods,
+      weatherThresholds:
+        preferences.weatherThresholds ?? this.preferences().weatherThresholds,
+      sideTimer: preferences.sideTimer ?? this.preferences().sideTimer,
     });
+    if (!this.preferences().sideTimer?.enabled)
+      this.store.set("sideTimer", null);
+    this.emit();
+  }
+  private currentTimer(sessionId?: string): SideTimerState | null {
+    const timer = this.store.get<SideTimerState | null>("sideTimer", null);
+    return this.preferences().sideTimer?.enabled &&
+      timer?.sessionId === sessionId
+      ? timer
+      : null;
+  }
+  timer(command: {
+    action: "start" | "pause" | "resume" | "snooze" | "dismiss" | "stop";
+    sessionId: string;
+    expectedTimerId: string | null;
+    targetId?: string;
+  }) {
+    const session = this.store.db
+      .prepare("SELECT * FROM sessions WHERE id=? AND ended_at IS NULL")
+      .get(command.sessionId) as SessionRow | undefined;
+    const settings = this.preferences().sideTimer;
+    if (!settings?.enabled || !session)
+      throw new AppError(
+        409,
+        "De timer staat uit of deze luistersessie is niet meer actief.",
+      );
+    const current = this.store.get<SideTimerState | null>("sideTimer", null);
+    if (
+      (current?.id ?? null) !== command.expectedTimerId ||
+      (current && current.sessionId !== session.id)
+    )
+      throw new AppError(
+        409,
+        "De timer is intussen gewijzigd. Ververs de pagina en probeer opnieuw.",
+      );
+    const now = this.iso();
+    let next: SideTimerState | null;
+    if (command.action === "start") {
+      const record = this.store.record(session.record_id);
+      if (
+        !record ||
+        !record.available ||
+        !record.isLP ||
+        (!record.demo &&
+          (stale(record.fetchedAt, this.now()) ||
+            stale(this.store.detailsAt(record.id), this.now())))
+      )
+        throw new AppError(
+          409,
+          "Ververs de releasegegevens voordat je een timer start.",
+        );
+      const target = timerTargets(record).targets.find(
+        (target) => target.id === command.targetId,
+      );
+      if (!target)
+        throw new AppError(
+          409,
+          "Deze kant heeft geen betrouwbare speeltijd. Ververs de gegevens of kies een beschikbare kant.",
+        );
+      next = {
+        id: randomUUID(),
+        sessionId: session.id,
+        target,
+        startedAt: now,
+        pausedAt: null,
+        pausedSeconds: 0,
+        graceMinutes: settings.graceMinutes,
+        snoozedUntil: null,
+        dismissed: false,
+      };
+    } else {
+      if (!current) throw new AppError(409, "Er is geen actieve timer.");
+      next = { ...current, id: randomUUID() };
+      switch (command.action) {
+        case "pause":
+          if (current.pausedAt)
+            throw new AppError(409, "De timer is al gepauzeerd.");
+          next.pausedAt = now;
+          next.snoozedUntil = null;
+          break;
+        case "resume":
+          if (!current.pausedAt) throw new AppError(409, "De timer loopt al.");
+          next.pausedSeconds += Math.max(
+            0,
+            (this.now() - Date.parse(current.pausedAt)) / 1000,
+          );
+          next.pausedAt = null;
+          next.snoozedUntil = null;
+          break;
+        case "snooze":
+          if (current.pausedAt || current.dismissed)
+            throw new AppError(
+              409,
+              "Deze herinnering kan nu niet worden uitgesteld.",
+            );
+          next.snoozedUntil = new Date(this.now() + 5 * 60000).toISOString();
+          break;
+        case "dismiss":
+          next.dismissed = true;
+          next.snoozedUntil = null;
+          break;
+        case "stop":
+          next = null;
+          break;
+      }
+    }
+    this.store.set("sideTimer", next);
     this.emit();
   }
   private wikiKey(record: RecordItem) {
@@ -562,9 +705,26 @@ export class Service {
     if (this.closing || this.mode === "demo") return;
     for (const record of this.store.records().filter((r) => r.available)) {
       if (!this.store.detailsAt(record.id)) this.queueDetails(record, 0);
-      if (this.config.wikiEnabled) void this.queueWiki(record, 0);
     }
+    this.queueAllWiki();
     this.refreshActive();
+  }
+  private queueAllWiki() {
+    if (!this.config.wikiEnabled) return;
+    // A persisted cooldown survives restarts; resume when it ends.
+    const retryAfter = this.store.get<number>("wikiRetryAfter", 0);
+    if (retryAfter > this.now())
+      return this.scheduleWikiResume(retryAfter - this.now());
+    for (const record of this.store.records().filter((r) => r.available))
+      void this.queueWiki(record, 0);
+  }
+  private scheduleWikiResume(cooldown: number) {
+    if (this.wikiResume || this.closing) return;
+    this.wikiResume = setTimeout(() => {
+      this.wikiResume = null;
+      if (!this.closing) this.queueAllWiki();
+    }, cooldown);
+    this.wikiResume.unref();
   }
   refreshActive() {
     const state = this.state();
@@ -613,6 +773,11 @@ export class Service {
       return Promise.resolve();
     if (this.store.get<number>("wikiRetryAfter", 0) > this.now())
       return Promise.resolve();
+    if (
+      this.store.get<number>(`wikiBackoff:${this.wikiKey(record)}`, 0) >
+      this.now()
+    )
+      return Promise.resolve();
     const cached = record.albumInfo;
     const ttl = cached?.status === "error" ? 15 * 60000 : KNOWLEDGE_TTL;
     if (
@@ -646,23 +811,37 @@ export class Service {
         this.enrichment.running = true;
         this.enrichment.progress = "Album- en artiestbronnen ophalen…";
         this.emit();
-        const albumInfo = await this.knowledge.lookup(current);
-        if (albumInfo.status === "error") {
-          this.store.set("wikiRetryAfter", this.now() + 15 * 60000);
+        const { info: albumInfo, failure } =
+          await this.knowledge.lookupDetailed(current);
+        const service =
+          failure?.kind === "rate_limit" ||
+          failure?.kind === "unavailable" ||
+          failure?.kind === "timeout";
+        if (failure && service) {
+          const cooldown =
+            failure.kind === "rate_limit"
+              ? Math.min(
+                  60 * 60000,
+                  Math.max(5 * 60000, failure.retryAfterMs ?? 5 * 60000),
+                )
+              : 5 * 60000;
+          this.store.set("wikiRetryAfter", this.now() + cooldown);
           this.queue.cancel("wiki:");
-        }
+          this.scheduleWikiResume(cooldown);
+        } else if (albumInfo.status === "error")
+          this.store.set(`wikiBackoff:${currentKey}`, this.now() + 6 * 3600000);
         for (const target of this.store
           .records()
           .filter((r) => this.wikiKey(r) === currentKey))
           this.store.put({ ...target, albumInfo });
         this.enrichment.running = false;
-        this.enrichment.error =
-          albumInfo.status === "error"
-            ? "Wiki-bronnen tijdelijk niet bereikbaar."
-            : null;
-        this.enrichment.progress =
-          albumInfo.status === "error"
-            ? "Bronnen later opnieuw proberen"
+        this.enrichment.error = service
+          ? "Wiki-bronnen tijdelijk overbelast of onbereikbaar; hervat automatisch."
+          : null;
+        this.enrichment.progress = service
+          ? "Bronnen later opnieuw proberen"
+          : albumInfo.status === "error"
+            ? "Album- en artiestbronnen bijgewerkt (1 album overgeslagen)"
             : "Album- en artiestbronnen bijgewerkt";
         if (albumInfo.status !== "error")
           this.enrichment.lastSuccess = this.iso();
@@ -690,6 +869,8 @@ export class Service {
   }
   async close() {
     this.closing = true;
+    if (this.wikiResume) clearTimeout(this.wikiResume);
+    this.wikiResume = null;
     await this.queue.close();
     await this.syncTask;
     this.store.close();

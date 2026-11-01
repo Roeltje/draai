@@ -3703,3 +3703,301 @@ h2 {
     width: 100%;
   }
 }
+
+.style-coverage {
+  margin: 25px 0;
+  padding: 22px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.18);
+}
+.style-coverage h3 {
+  margin: 0 0 10px;
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 400;
+}
+.style-coverage h4 {
+  font-size: 13px;
+  margin: 25px 0 9px;
+  font-weight: 500;
+}
+.style-coverage details > summary {
+  cursor: pointer;
+  font-size: 12px;
+  padding: 15px 0;
+}
+.coverage-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 25px;
+  margin: 18px 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+.coverage-counts strong {
+  font-weight: 500;
+  color: var(--ink);
+  font-size: 20px;
+  margin-right: 5px;
+}
+.coverage-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px;
+}
+.coverage-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  border-top: 1px solid var(--line);
+  padding: 12px 0;
+  font-size: 12px;
+}
+.coverage-list small {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  margin-top: 5px;
+}
+.coverage-list button,
+.coverage-more > button,
+.threshold-reset {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  background: transparent;
+  padding: 10px 12px;
+  min-height: 44px;
+  font-size: 10px;
+  line-height: 1.6;
+}
+.coverage-list button {
+  flex-shrink: 0;
+}
+.coverage-more {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.coverage-more .rule-select {
+  min-width: 0;
+}
+.coverage-more > button {
+  flex-shrink: 0;
+}
+.weather-thresholds {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 220px));
+  gap: 18px;
+  margin: 20px 0 12px;
+}
+.weather-thresholds label {
+  font-size: 12px;
+  line-height: 1.7;
+}
+.weather-thresholds input {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: #eae6da;
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+  margin-top: 7px;
+}
+.weather-thresholds input[aria-invalid="true"] {
+  border-color: var(--coral);
+}
+.threshold-reset {
+  text-align: left;
+  margin: 0 0 20px;
+}
+@media (max-width: 600px) {
+  .style-coverage {
+    padding: 18px 14px;
+  }
+  .style-coverage h3 {
+    font-size: 23px;
+  }
+  .coverage-counts {
+    gap: 10px 16px;
+  }
+  .coverage-counts > span {
+    font-size: 10px;
+  }
+  .coverage-counts strong {
+    font-size: 18px;
+  }
+  .coverage-more {
+    flex-direction: column;
+  }
+  .coverage-more > button {
+    width: 100%;
+  }
+  .weather-thresholds {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+.side-timer {
+  margin: 22px 0 28px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  background: #eceadd;
+}
+.side-timer-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.side-timer-heading h2 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 23px;
+  margin: 0;
+}
+.side-timer-heading > span {
+  margin-left: auto;
+  font-size: 9px;
+  color: var(--muted);
+}
+.side-timer-description,
+.side-timer-footnote {
+  font-size: 11px;
+  line-height: 1.8;
+  color: var(--muted);
+  margin: 12px 0;
+}
+.side-timer-reading {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 22px 0 14px;
+}
+.side-timer-reading > div > span {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 7px;
+}
+.side-timer-reading strong {
+  font-size: 13px;
+  font-weight: 500;
+}
+.side-timer-time {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--serif);
+  font-size: 38px;
+  white-space: nowrap;
+}
+.side-timer-progress {
+  height: 3px;
+  background: var(--line);
+}
+.side-timer-progress > span {
+  display: block;
+  height: 100%;
+  background: var(--ink);
+}
+.side-timer-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin: 14px 0;
+}
+.side-timer-controls > button,
+.side-timer-start-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid var(--line);
+  min-height: 44px;
+  padding: 10px 14px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 11px;
+  line-height: 1.6;
+}
+.side-timer-start {
+  margin-top: 22px;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+}
+.side-timer-start label {
+  display: block;
+  font-size: 11px;
+  margin-bottom: 14px;
+}
+.side-timer-start select {
+  display: block;
+  min-height: 46px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 14px;
+  border-radius: 0;
+}
+.side-timer-start-button {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.side-timer-footnote {
+  font-size: 10px;
+  margin-bottom: 0;
+}
+.side-timer-due {
+  border-color: var(--coral);
+}
+.side-timer-reminder {
+  padding: 16px;
+  background: var(--paper);
+  border-left: 3px solid var(--coral);
+  margin-top: 20px;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.side-timer-reminder > strong {
+  font-weight: 500;
+}
+.side-timer-reminder p {
+  color: var(--muted);
+  font-size: 11px;
+}
+@media (max-width: 600px) {
+  .side-timer {
+    padding: 18px 15px;
+  }
+  .side-timer-heading {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .side-timer-heading h2 {
+    font-size: 21px;
+  }
+  .side-timer-heading > span {
+    margin-left: 28px;
+    flex-basis: 100%;
+  }
+  .side-timer-time {
+    font-size: 33px;
+  }
+  .side-timer-controls > button {
+    flex-grow: 1;
+  }
+  .side-timer-start-button {
+    width: 100%;
+  }
+}

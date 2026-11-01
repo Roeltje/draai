@@ -22,9 +22,57 @@ function validatePreferences(
     v.every((m) => moods.includes(m) && m !== "alles") &&
     new Set(v).size === v.length;
   const weather = value.weatherMoods as Record<string, unknown> | undefined;
+  const thresholds = value.weatherThresholds as
+    Record<string, unknown> | undefined;
+  if (
+    thresholds !== undefined &&
+    (!thresholds ||
+      typeof thresholds !== "object" ||
+      Array.isArray(thresholds) ||
+      Object.keys(thresholds).some(
+        (key) => !["coldBelow", "warmFrom"].includes(key),
+      ) ||
+      !["coldBelow", "warmFrom"].every(
+        (key) =>
+          typeof thresholds[key] === "number" &&
+          Number.isFinite(thresholds[key]) &&
+          (thresholds[key] as number) >= -40 &&
+          (thresholds[key] as number) <= 50,
+      ) ||
+      (thresholds.coldBelow as number) >= (thresholds.warmFrom as number))
+  )
+    throw new AppError(
+      400,
+      "Ongeldige temperatuurgrenzen: gebruik waarden tussen -40 en 50, met koud lager dan warm.",
+    );
+  const sideTimer = value.sideTimer as Record<string, unknown> | undefined;
+  if (
+    sideTimer !== undefined &&
+    (!sideTimer ||
+      typeof sideTimer !== "object" ||
+      Array.isArray(sideTimer) ||
+      Object.keys(sideTimer).some(
+        (key) => !["enabled", "graceMinutes"].includes(key),
+      ) ||
+      typeof sideTimer.enabled !== "boolean" ||
+      !Number.isInteger(sideTimer.graceMinutes) ||
+      (sideTimer.graceMinutes as number) < 0 ||
+      (sideTimer.graceMinutes as number) > 30)
+  )
+    throw new AppError(
+      400,
+      "Ongeldige timerinstellingen: kies een wachttijd van 0 tot en met 30 minuten.",
+    );
   if (
     Object.keys(value).some(
-      (k) => !["genreMoods", "styleMoods", "weatherMoods"].includes(k),
+      (k) =>
+        ![
+          "genreMoods",
+          "styleMoods",
+          "weatherMoods",
+          "weatherThresholds",
+          "sideTimer",
+        ].includes(k),
     ) ||
     !Array.isArray(value.genreMoods) ||
     value.genreMoods.length > 100 ||
@@ -72,6 +120,8 @@ function validatePreferences(
         }
       : {}),
     weatherMoods: weather,
+    ...(sideTimer !== undefined ? { sideTimer } : {}),
+    ...(thresholds !== undefined ? { weatherThresholds: thresholds } : {}),
   } as SelectionPreferences;
   if (
     new Set(normalized.genreMoods.map((g) => g.genre.toLocaleLowerCase()))
@@ -80,8 +130,11 @@ function validatePreferences(
     throw new AppError(400, "Gebruik elk genre maar één keer.");
   if (
     normalized.styleMoods &&
-    new Set(normalized.styleMoods.map((rule) => rule.style.toLocaleLowerCase()))
-      .size !== normalized.styleMoods.length
+    new Set(
+      normalized.styleMoods.map((rule) =>
+        rule.style.replace(/\s+/g, " ").toLocaleLowerCase(),
+      ),
+    ).size !== normalized.styleMoods.length
   )
     throw new AppError(400, "Gebruik elke stijl maar één keer.");
   return normalized;
@@ -162,6 +215,41 @@ export async function buildApp(
       b.useSeasons as boolean | undefined,
       b.useGenreMoods as boolean | undefined,
     );
+    return service.state();
+  });
+  app.post("/api/timer", async (request) => {
+    const body = objectBody(request.body);
+    const actions = [
+      "start",
+      "pause",
+      "resume",
+      "snooze",
+      "dismiss",
+      "stop",
+    ] as const;
+    if (
+      !actions.includes(body.action as (typeof actions)[number]) ||
+      Object.keys(body).some(
+        (key) =>
+          !["action", "sessionId", "expectedTimerId", "targetId"].includes(key),
+      ) ||
+      !(
+        body.expectedTimerId === null ||
+        (typeof body.expectedTimerId === "string" &&
+          body.expectedTimerId.length > 0 &&
+          body.expectedTimerId.length <= 150)
+      ) ||
+      (body.action !== "start" && body.targetId !== undefined)
+    )
+      throw new AppError(400, "Ongeldige timeractie.");
+    service.timer({
+      action: body.action as (typeof actions)[number],
+      sessionId: requiredString(body.sessionId),
+      expectedTimerId: body.expectedTimerId as string | null,
+      ...(body.action === "start"
+        ? { targetId: requiredString(body.targetId) }
+        : {}),
+    });
     return service.state();
   });
   app.post("/api/sessions/start", async (request) => {

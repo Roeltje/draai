@@ -82,3 +82,19 @@ MIT-licentie, portable ontwikkelinstructies, SECURITY.md, korte LXC-updatehandle
 - GitHub Actions-workflow `ci.yml`: bij push naar main en elke PR install (frozen lockfile), typecontrole, tests, build en `pnpm audit --prod --audit-level high`. Alleen leesrechten, Node 24, pnpm-versie uit package.json.
 - Dependabot: minor- en patchupdates gegroepeerd in één PR, grote versiesprongen apart, 5 dagen cooldown voor nieuwe versies; GitHub Actions maandelijks bijgewerkt.
 - Lokaal alle stappen van de workflow geslaagd behalve de audit: main bevat nog het hoge lek in @fastify/static, dat Dependabot-PR #2 (10.1.7) oplost. CI wordt pas groen na die merge. De workflow zelf is nog niet op GitHub gedraaid.
+## Kleine voorkeurverbeteringen — 30 oktober 2026
+- Op verzoek voortaan featurebranches en pull requests; geen rechtstreekse publicatie naar main.
+- Sol medium bouwt afgebakende backend- en interfacetaken; hoofdagent controleert integratie en browsergedrag.
+- Instelbare koude-/warmtegrenzen met validatie en behoud bij herstart/oudere clients; standaard 10/22 °C. Stijloverzicht telt bekende styles en maakt ontbrekende regels direct bewerkbaar.
+
+## Optionele kanttimer — 30 oktober 2026
+- PR #10 bevat temperatuurgrenzen en stijlinventaris; GitHub CI groen. PR #11 bouwt daarop voort met de timer. Niets automatisch gemerged; main niet rechtstreeks gewijzigd.
+- Timer standaard uit, handmatig starten per kant of expliciete albumfallback, pauze/hervatten, snooze5min, herinnering verbergen en stoppen. Instelling uit wist timer zonder luistersessie af te ronden.
+- Sol medium deed frontend/backend; hoofdagent reviewde en integreerde de inmiddels gewijzigde main inclusief pakketupdate. Alle91 tests, typecheck en productiebuild slagen.
+- Browser op telefoonformaat: inschakelen/wachttijd0, A starten, pauze/hervatten, herinnering, snooze, B starten, herladen, herinnering uit, globale instelling uit en sessie afronden. Tijdelijke fictieve tracks van1seconde gebruikt om geen echte minuten te wachten. Geen echte Discogs/WU/hardware- of LXC-update in deze ronde.
+
+## Wiki-fouten isoleren — 1 november 2026
+- Productie toonde 149 albums klaar, 1 fout en 280 nooit opgehaald: één snelle fout zette alle Wiki-verrijking 15 minuten stil.
+- Fouten worden nu geclassificeerd (rate limit, onbeschikbaar, timeout, afgewezen, ongeldig) en per poging gelogd zonder URL's, titels of Discogs-ID's. Een afgewezen of ongeldig album krijgt alleen zelf status error met 6 uur uitstel; de wachtrij loopt door.
+- Bronniveau-fouten (429/5xx/timeout, ook bij een samenvatting) geven een afkoeling van 5-60 minuten met één automatische hervatting. Optionele `WIKI_CONTACT` komt in de User-Agent.
+- Entiteit-/SPARQL-caching blijft open. Niet tegen de echte Wikimedia-diensten getest in deze ronde.

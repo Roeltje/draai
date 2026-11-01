@@ -13,10 +13,12 @@ De screenshots tonen de fictieve voorbeeldcollectie; er zijn geen persoonlijke c
 ## Wat je ermee kunt
 
 - Platen kiezen op stemming, met instelbare verbanden voor 91 stijlen en 13 genres. Je eigen plaatlabels gaan vóór stijlverbanden, stijlen vóór genres.
+- Inzicht in stijlen zonder stemmingsverband, met aantallen en direct bewerkbare regels.
 - Dagelijks wisselende hoezen om je collectie opnieuw te ontdekken.
 - Luistersessies handmatig bevestigen en bewaren, met notities en statistieken over geregistreerde sessies.
-- Optioneel gemeten weer van Weather Underground gebruiken in zelf ingestelde selectieregels.
+- Optioneel gemeten weer van Weather Underground gebruiken in zelf ingestelde selectieregels, met eigen koud-/warmtegrenzen.
 - Optioneel albumverhalen en muziekkalenderinformatie tonen via exacte Discogs-ID-koppelingen met Wikidata en Wikipedia. Deze functie staat standaard uit.
+- Een optionele kanttimer met instelbare wachttijd, pauzeren en uitstellen. Standaard uit; je start een kant zelf. De herinnering verschijnt alleen in het luisterscherm, niet als achtergrondmelding.
 - Een sessie tonen op een tweede scherm via `/display` (kioskweergave).
 
 Draai speelt geen muziek af en detecteert geen audio, nummers of draaitafel. Sessieduur is geen gemeten afspeeltijd.
@@ -43,7 +45,7 @@ Draai heeft geen ingebouwde login of toegangsbeheer. Gebruik het op een vertrouw
 
 ## Licentie en gegevens
 
-De broncode is beschikbaar onder de [MIT-licentie](LICENSE). Externe gegevens en diensten, waaronder Discogs, Wikipedia/Wikidata en Weather Underground, vallen onder hun eigen voorwaarden en licenties. Draai toont bronvermelding waar van toepassing; de MIT-licentie geldt niet voor die externe gegevens.
+De broncode is beschikbaar onder de [GNU AGPL-3.0](LICENSE). Je mag Draai gebruiken, aanpassen en verspreiden; wie een aangepaste versie verspreidt of als online dienst aanbiedt, moet de broncode daarvan onder dezelfde licentie beschikbaar stellen. Versies tot en met commit 81f6df1 zijn eerder onder MIT uitgebracht. Externe gegevens en diensten, waaronder Discogs, Wikipedia/Wikidata en Weather Underground, vallen onder hun eigen voorwaarden en licenties. Draai toont bronvermelding waar van toepassing; de AGPL-licentie geldt niet voor die externe gegevens.
 
 ## Meedenken en ontwikkelen
 
