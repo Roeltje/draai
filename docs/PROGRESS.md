@@ -110,3 +110,8 @@ MIT-licentie, portable ontwikkelinstructies, SECURITY.md, korte LXC-updatehandle
 - Zelfde patroon als bij de Wiki-fix: een 404/410 voor één release pauzeerde alle detailaanvragen 15 minuten en gooide de wachtrij weg, zonder automatisch hervatten. Daardoor bleven persingsdetails en stijlen langer ontbreken.
 - Nu: 404/410 slaat alleen die release 24 uur over; andere fouten pauzeren de wachtrij 15 minuten en hervatten automatisch, ook na herstart. Logregel per fout zonder ID's of token.
 - 96 tests en typecheck slagen. Niet tegen de echte Discogs-API getest.
+
+## Wiki-rate-limit en cache (W01) — 1 november 2026
+- Productielog na #14: 429's van Wikidata-API en Wikipedia met korte Retry-After, telkens kort na het hervatten.
+- Nu: 1 s tussen aanvragen per dienst, cache voor SPARQL-treffers en ingekorte entiteiten, Wikipedia-fragmenten per taal gebundeld, rate-limit-pauze volgt Retry-After met verdubbelend minimum en spreiding.
+- Sonnet bouwde; hoofdagent reviewde en voegde main (#16) samen. 104 tests en typecheck slagen. Niet tegen de echte Wikimedia-diensten getest.

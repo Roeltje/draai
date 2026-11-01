@@ -864,18 +864,31 @@ export class Service {
           failure?.kind === "unavailable" ||
           failure?.kind === "timeout";
         if (failure && service) {
-          const cooldown =
-            failure.kind === "rate_limit"
-              ? Math.min(
-                  60 * 60000,
-                  Math.max(5 * 60000, failure.retryAfterMs ?? 5 * 60000),
-                )
-              : 5 * 60000;
+          let cooldown = 5 * 60000;
+          if (failure.kind === "rate_limit") {
+            // Exponential floor over consecutive rate limits, plus jitter.
+            const streak = this.store.get<number>("wikiRateStreak", 0);
+            const base = Math.max(
+              failure.retryAfterMs ?? 60000,
+              30000 * 2 ** Math.min(streak, 10),
+            );
+            cooldown = Math.min(
+              60 * 60000,
+              Math.round(base * (1 + 0.2 * this.random())),
+            );
+            this.store.set("wikiRateStreak", streak + 1);
+          }
           this.store.set("wikiRetryAfter", this.now() + cooldown);
           this.queue.cancel("wiki:");
           this.scheduleWikiResume(cooldown);
-        } else if (albumInfo.status === "error")
-          this.store.set(`wikiBackoff:${currentKey}`, this.now() + 6 * 3600000);
+        } else {
+          this.store.set("wikiRateStreak", 0);
+          if (albumInfo.status === "error")
+            this.store.set(
+              `wikiBackoff:${currentKey}`,
+              this.now() + 6 * 3600000,
+            );
+        }
         for (const target of this.store
           .records()
           .filter((r) => this.wikiKey(r) === currentKey))
