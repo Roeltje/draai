@@ -105,3 +105,8 @@ MIT-licentie, portable ontwikkelinstructies, SECURITY.md, korte LXC-updatehandle
 - Fouten worden nu geclassificeerd (rate limit, onbeschikbaar, timeout, afgewezen, ongeldig) en per poging gelogd zonder URL's, titels of Discogs-ID's. Een afgewezen of ongeldig album krijgt alleen zelf status error met 6 uur uitstel; de wachtrij loopt door.
 - Bronniveau-fouten (429/5xx/timeout, ook bij een samenvatting) geven een afkoeling van 5-60 minuten met één automatische hervatting. Optionele `WIKI_CONTACT` komt in de User-Agent.
 - Entiteit-/SPARQL-caching blijft open. Niet tegen de echte Wikimedia-diensten getest in deze ronde.
+
+## Kioskweergave in lagen (K01) — 1 november 2026
+- `/display` schaalt nu in lagen met pure CSS-mediaqueries op breedte én hoogte: klein hoes/titel/artiest, middel (≥900×560) meta en tracklijst per kant, groot (≥1600×900) ook credits, vers weer en eerdere draaien. Scherm is exact de viewport en scrolt nooit; geen track of kant gemarkeerd als spelend; Discogs-bron in elke laag.
+- Hulpfuncties in `src/displayInfo.ts` met unit-tests; demo-1 kreeg fictieve credits.
+- Sonnet bouwde; hoofdagent controleerde in de browser op 540×320, 1024×600, 1920×1080 en 375×812 (geen overflow) en vergrootte titel/kleine tekst op het grote scherm. Niet op het echte kioskscherm of een Pi gecontroleerd.
