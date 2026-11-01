@@ -64,6 +64,13 @@ Gebruikerskeuze: style-/genrestartmapping standaard ingevuld en actief, eigen tw
 MIT-licentie, portable ontwikkelinstructies, SECURITY.md, korte LXC-updatehandleiding en wekelijkse Dependabot-configuratie toegevoegd. Dependency graph, Dependabot alerts, security updates en malware alerts via GitHub bevestigd ingeschakeld. Branchregel Protect main (geen force-push/verwijderen, geen bypass) na gebruikersbevestiging opgeslagen voor default branch main. Op huidige private plan worden rulesets niet afgedwongen. Secret scanning/push protection niet aangeboden op deze private instellingenpagina: na openbaar maken controleren. Zichtbaarheid niet gewijzigd; geen betaald abonnement geactiveerd.
 
 
+## Volledige stijl- en genredefaults — 1 november 2026
+- Standaardverbanden uitgebreid van 91 naar 734 stijlen en van 13 naar alle 15 Discogs-genres, zodat vrijwel elke LP direct een stemming krijgt. Genre blijft vangnet voor onbekende stijlen; 19 niet-muziekstijlen (zoals Spoken Word en Interview) en het genre Non-Music staan bewust uit.
+- Upgrade via `moodDefaultsVersion` 2 voegt alleen nieuwe stijlen/genres toe die nog niet bewaard zijn. Eigen aanpassingen, uitgezette en eerder verwijderde regels en een bewust lege lijst blijven ongemoeid; eigen plaatlabels gaan nog altijd voor.
+- Maximum aantal stijlregels in de API verhoogd van 200 naar 1000.
+- Stijllijst opgesteld door een Sonnet-subagent, verzonnen/dubbele namen door de hoofdagent verwijderd; de stemmingen zijn smaakvoorstellen.
+- 99 tests, typecontrole en productiebuild geslaagd. Niet in de browser of op de echte LXC-collectie gecontroleerd; het aantal ‘zonder verband’ moet na update sterk dalen.
+
 ## Homepage en stijlvoorkeuren afgerond — 29 oktober 2026
 - Afgebakend bouwwerk door GPT-6.1 Sol medium; hoofdagent controleerde migratie, selectie, interface en integratie. Kleine browserbevinding door dezelfde frontendagent opgelost: zonder passende collectiestijlen verschijnen de presets meteen.
 - Dagelijkse homepagehoezen in Amsterdamse tijd, zonder extra API-import. Maximaal twee verschillende exemplaren; lege/kleine/verlopen collecties afgevangen.

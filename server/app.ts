@@ -87,7 +87,7 @@ function validatePreferences(
     ) ||
     (value.styleMoods !== undefined &&
       (!Array.isArray(value.styleMoods) ||
-        value.styleMoods.length > 200 ||
+        value.styleMoods.length > 1000 ||
         !value.styleMoods.every(
           (rule: any) =>
             rule &&
