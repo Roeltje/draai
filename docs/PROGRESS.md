@@ -120,3 +120,7 @@ MIT-licentie, portable ontwikkelinstructies, SECURITY.md, korte LXC-updatehandle
 - Productielog na #14: 429's van Wikidata-API en Wikipedia met korte Retry-After, telkens kort na het hervatten.
 - Nu: 1 s tussen aanvragen per dienst, cache voor SPARQL-treffers en ingekorte entiteiten, Wikipedia-fragmenten per taal gebundeld, rate-limit-pauze volgt Retry-After met verdubbelend minimum en spreiding.
 - Sonnet bouwde; hoofdagent reviewde en voegde main (#16) samen. 104 tests en typecheck slagen. Niet tegen de echte Wikimedia-diensten getest.
+
+## Standaard/eigen-badges bij stemmingsverbanden (M02) — 1 november 2026
+- Elk stijl- en genreverband toont nu `standaard`, `aangepast` of `eigen`, afgeleid door vergelijking met de meegeleverde defaults (opslag ongewijzigd). Keuzelijst en kop tonen hoeveel verbanden je aanpaste; per aangepast verband een knop "Standaard terugzetten" (alleen in concept tot bewaren).
+- Unit-test voor `ruleOrigin`; 112 tests, typecheck en build slagen. In de browser gecontroleerd op breed en 375 px.
