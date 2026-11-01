@@ -111,6 +111,11 @@ MIT-licentie, portable ontwikkelinstructies, SECURITY.md, korte LXC-updatehandle
 - Nu: 404/410 slaat alleen die release 24 uur over; andere fouten pauzeren de wachtrij 15 minuten en hervatten automatisch, ook na herstart. Logregel per fout zonder ID's of token.
 - 96 tests en typecheck slagen. Niet tegen de echte Discogs-API getest.
 
+## Kioskweergave in lagen (K01) — 1 november 2026
+- `/display` schaalt nu in lagen met pure CSS-mediaqueries op breedte én hoogte: klein hoes/titel/artiest, middel (≥900×560) meta en tracklijst per kant, groot (≥1600×900) ook credits, vers weer en eerdere draaien. Scherm is exact de viewport en scrolt nooit; geen track of kant gemarkeerd als spelend; Discogs-bron in elke laag.
+- Hulpfuncties in `src/displayInfo.ts` met unit-tests; demo-1 kreeg fictieve credits.
+- Sonnet bouwde; hoofdagent controleerde in de browser op 540×320, 1024×600, 1920×1080 en 375×812 (geen overflow) en vergrootte titel/kleine tekst op het grote scherm. Niet op het echte kioskscherm of een Pi gecontroleerd.
+
 ## Wiki-rate-limit en cache (W01) — 1 november 2026
 - Productielog na #14: 429's van Wikidata-API en Wikipedia met korte Retry-After, telkens kort na het hervatten.
 - Nu: 1 s tussen aanvragen per dienst, cache voor SPARQL-treffers en ingekorte entiteiten, Wikipedia-fragmenten per taal gebundeld, rate-limit-pauze volgt Retry-After met verdubbelend minimum en spreiding.

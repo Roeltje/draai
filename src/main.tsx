@@ -33,6 +33,7 @@ import { BrandStar } from "./BrandStar";
 import { SeasonEditor } from "./SeasonEditor";
 import { ListeningStats } from "./ListeningStatsPanel";
 import { formatRegisteredDuration } from "./listeningStats";
+import { DisplayNowPlaying } from "./DisplayNowPlaying";
 import { SideTimerPanel } from "./SideTimerPanel";
 import { DEFAULT_SIDE_TIMER_SETTINGS } from "../shared/sideTimer";
 import { PreferencesEditor } from "./PreferencesEditor";
@@ -473,25 +474,14 @@ function App() {
         </div>
         {active ? (
           <>
-            <div className="display-content">
-              <Cover record={active.record} />
-              <div>
-                <span className="eyebrow">
-                  NU LUISTEREN {demo ? " / DEMO" : ""}
-                </span>
-                <h1>{active.record.title}</h1>
-                <h2>{active.record.artist}</h2>
-                <div className="display-rule" />
-                <p>
-                  {active.record.formats.join(" · ")}
-                  {active.record.year ? ` / ${active.record.year}` : ""}
-                </p>
-                <p className="muted">
-                  Handmatig bevestigd · geen trackdetectie
-                </p>
-                <Source record={active.record} />
-              </div>
-            </div>
+            <DisplayNowPlaying
+              session={active}
+              history={state.history}
+              weather={state.weather}
+              demo={demo}
+              cover={<Cover record={active.record} />}
+              source={<Source record={active.record} />}
+            />
           </>
         ) : (
           <div className="display-idle">

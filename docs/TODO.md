@@ -17,7 +17,7 @@ Bijgewerkt: 29 oktober 2026. Dit is een keuzelijst, geen opdracht om alles te bo
 | ID | Prio | Taak | Werk / tokens | Klaar als |
 |---|---|---|---|---|
 | G01 | P0 | Publieke repo voorbereiden: portable paden, MIT, documentatie | S / laag | LICENSE en pakketlicentie aanwezig, geen machinegebonden paden, publieke clone plus optionele private toegang beschreven; naar GitHub gepubliceerd. Afgerond: MIT, portable docs en korte updatehandleiding gepubliceerd. |
-| G02 | P0 | GitHub security-instellingen afronden | S–M / middel | Dependency graph, alerts, security-updates en malwarealerts aangezet; main-regel opgeslagen. Secret scanning/push protection na publicatie controleren; De main-regel werd vóór openbaar maken niet afgedwongen; de huidige werking moet nog worden bevestigd. Eventuele beperking noteren. Geen betaald abonnement inschakelen. Gebruiker heeft de repo inmiddels openbaar gemaakt; resterende controles na openbaar maken staan nog open. |
+| G02 | Afgerond | GitHub security-instellingen afronden | S–M / middel | Dependency graph, alerts, security-updates, malwarealerts, secret scanning/push protection en main-regel door gebruiker gecontroleerd na openbaar maken (1 november 2026). |
 | G03 | Klaar | Losse korte LXC-updatehandleiding en eerste praktijkcheck | S / laag | Clone vernieuwen, updater uitvoeren, config/data behouden; werkelijk resultaat op Ubuntu26.04 apart bevestigen. Updater bestaat al, gesimuleerde foutpaden getest. Gebruiker bevestigt geslaagde update op eigen Ubuntu 26.04-LXC; app bleef bereikbaar. |
 | H01 | Klaar | Afwisselende homepagehoezen | S / laag | Twee verschillende beschikbare, verse hoezen uit eigen collectie; bijvoorbeeld dagelijks wisselen in Amsterdamse tijd en stabiel tijdens paginagebruik. Geen nieuwe volledige API-import nodig; 0, 1 en 2 platen en verlopen data werken. |
 
@@ -48,7 +48,7 @@ Homepage: dagelijkse rotatie is gebouwd en getest. Een optionele knop voor nieuw
 
 | ID | Prio | Idee / opbrengst | Werk / tokens | Scope / grens |
 |---|---|---|---|---|
-| K01 | P1 | Kioskinformatie schalen in lagen | M / middel | Klein hoes/artiest/titel; middel tracks/jaar/label; groot beschikbare credits/weer/geschiedenis. Test circa 540×320, 1024×600 en 1920×1080 én kijkafstand. Geen track/kant tonen alsof gedetecteerd. Geen nieuwe data nodig voor eerste stap. |
+| K01 | Basis gebouwd / rest P2 | Kioskinformatie schalen in lagen | M / middel | Gebouwd: klein hoes/titel/artiest (liggend, nooit scrollen), middel meta en tracklijst per kant, groot credits/vers weer/eerdere draaien; puur CSS-lagen op breedte én hoogte, gecontroleerd op 540×320, 1024×600, 1920×1080 en telefoon staand in de demo. Nog: controle op het echte kioskscherm en kijkafstand, Pi-prestaties. Geen track/kant tonen alsof gedetecteerd. |
 | K02 | P2 | Rustmodus met langzaam wisselende hoezen, weer en aanbeveling | M / middel | Geen actieve sessie; gedeelde rotatie met H01, beperkte beelden, weinig animatie en reduced-motion. Geen stille wijzigingen aan selectie of geschiedenis. |
 | K03 | P2 | Nachtstand en dimmen | S / laag–middel | Begin met instelbaar tijdschema en CSS-dimmen; hardwarehelderheid is aparte integratie. Zonsondergang hangt af van M09. |
 | K04 | Basis gebouwd, PR #11 | Kanttimer en omdraaiseintje | M / middel | Expliciet kantA/B starten/pauzeren/corrigeren; voortgang en track alleen als schatting. Stiltes/livealbums maken werkelijke naaldpositie onbekend. |

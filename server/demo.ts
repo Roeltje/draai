@@ -65,7 +65,21 @@ export function demoRecords(now: string): RecordItem[] {
       },
       { position: "B2", title: "Tot straks (voorbeeld)", duration: "3:45" },
     ],
-    credits: [],
+    credits:
+      i === 0
+        ? [
+            { artistId: 0, name: "Voorbeeld Productie", role: "Producer" },
+            { artistId: 0, name: "Fictieve Mix", role: "Mixed By" },
+            { artistId: 0, name: "Fictieve Mix", role: "Mixed By" },
+            { artistId: 0, name: "Demo Master", role: "Mastered By" },
+            { artistId: 0, name: "Anna Voorbeeld", role: "Piano" },
+            { artistId: 0, name: "Bram Fictief", role: "Bass" },
+            { artistId: 0, name: "Cleo Demo", role: "Drums" },
+            { artistId: 0, name: "Daan Niemand", role: "Saxophone" },
+            { artistId: 0, name: "Eva Verzonnen", role: "Strings" },
+            { artistId: 0, name: "Finn Nergens", role: "Artwork" },
+          ]
+        : [],
     notes:
       "Fictieve voorbeeldplaat. Alle releasegegevens en tracks zijn demonstratiegegevens.",
     tags: tags[i],
