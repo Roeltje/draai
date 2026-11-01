@@ -138,10 +138,7 @@ Kanttimerbasis inmiddels gebouwd in PR #11: standaard uit, expliciet starten per
 
 ## Wiki-verrijking: vervolg na foutisolatie — 1 november 2026
 
-**W01 · P2 · S / laag.** De uitval is opgelost in #14. Oorzaak in productie: 149 albums klaar, 1 fout, 280 nooit opgehaald. Eén snel foutantwoord van één album zette de hele Wiki-wachtrij 15 minuten stil en gooide de rest weg. Losse aanvragen vanaf de LXC naar alle drie de diensten gaven 200 in minder dan 0,3 s: geen blokkade van IP, netwerk of User-Agent. Gedaan in #14: foutclassificatie per dienst, logregels zonder URL's of ID's, 6 uur uitstel per album, een gedeelde afkoeling van 5–60 minuten die Retry-After respecteert, automatisch hervatten (ook na een herstart) en een optionele `WIKI_CONTACT` in de User-Agent.
+**W01 · Gebouwd, praktijkcontrole open.** Na #14 bleef productie 429's krijgen van de Wikidata-API en Wikipedia (Retry-After 10–40 s), ongeveer elke 5–6 minuten na hervatten. Gebouwd: minimaal 1 s tussen aanvragen per dienst, cache voor SPARQL-treffers per Discogs-ID en voor ingekorte Wikidata-entiteiten (30 dagen, lege treffers 7 dagen), Wikipedia-fragmenten per taal gebundeld, en bij een rate limit een pauze van Retry-After met verdubbelend minimum en 0–20 % spreiding (max. 60 minuten) in plaats van altijd 5 minuten. Een typisch album met 2 artiesten gaat van tot 5 naar 3 aanvragen; met warme cache 0 voor bekende artiesten.
 
-- Praktijkcontrole na de update: `journalctl -u draai | grep "Wiki:"` laat zien welke fout het eerder mislukte album gaf. Het aantal nooit opgehaalde albums moet dalen zonder dat de wachtrij stilvalt. Vul `WIKI_CONTACT` in `/etc/draai.env` in.
-- Cache voor Wikidata-entiteiten en SPARQL-treffers per Discogs-artiest-ID: terugkerende artiesten worden nu per album opnieuw opgevraagd. Zelfde TTL en bronvermelding als de bestaande artikelcache.
-- Wikipedia-fragmenten per taal bundelen in één aanvraag (`titles=A|B`), zodat een album hoogstens 3–4 aanvragen doet in plaats van 7.
-- Een album waarvan de samenvatting door een rate limit mislukte, blijft nu zonder samenvatting tot de gewone TTL. Overweeg alleen de fragmenten na de afkoeling opnieuw op te halen.
-- Klaar als terugkerende artiesten uit de cache komen, de tests met fixtures het aantal aanvragen per album vastleggen en een kleine praktijkproef geen nieuwe dienstfouten in de log laat zien. Geen volledige collectie opnieuw ophalen als test.
+- Praktijkcontrole na de update: `journalctl -u draai | grep "Wiki:"` hoort veel minder 429's te tonen; `WIKI_CONTACT` invullen in `/etc/draai.env`.
+- Nog open: een album waarvan de samenvatting door een rate limit mislukte, blijft zonder samenvatting tot de gewone TTL.

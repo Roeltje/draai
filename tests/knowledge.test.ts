@@ -664,7 +664,7 @@ test("an album-level rejection does not stop the queue and is backed off", async
   }
 });
 
-test("a 429 sets a clamped service cooldown and cancels remaining jobs", async () => {
+test("a 429 sets a service cooldown and cancels remaining jobs", async () => {
   const { config, cleanup } = setup();
   let calls = 0;
   const service = new Service(
@@ -673,6 +673,7 @@ test("a 429 sets a clamped service cooldown and cancels remaining jobs", async (
       now: () => now,
       wait: noWait,
       log: silent,
+      random: () => 0,
       fetcher: fetcher(() => {
         calls++;
         return new Response("{}", {
@@ -687,7 +688,7 @@ test("a 429 sets a clamped service cooldown and cancels remaining jobs", async (
     service.store.put(a);
     service.store.put(b);
     await service.enrichRecords();
-    assert.equal(service.store.get("wikiRetryAfter", 0), now + 5 * 60000);
+    assert.equal(service.store.get("wikiRetryAfter", 0), now + 120000);
     assert.equal(service.store.record("b-1")!.albumInfo, undefined);
     assert.ok(calls <= 2);
     assert.match(service.state().enrichment!.error!, /hervat automatisch/);
@@ -755,4 +756,193 @@ test("contact is placed in the User-Agent, otherwise the old one is kept", async
     /^Draai\/0\.1 \(personal music collection; source-linked/,
   );
   assert.equal(agents[2], agents[1]);
+});
+
+const memoryCache = () => {
+  const values = new Map<string, unknown>();
+  return {
+    get<T>(key: string, fallback: T): T {
+      return values.has(key) ? (values.get(key) as T) : fallback;
+    },
+    set(key: string, value: unknown) {
+      values.set(key, value);
+    },
+  };
+};
+
+test("requests are paced per service, not across services", async () => {
+  let t = now;
+  const waits: number[] = [];
+  const client = new KnowledgeClient(
+    fetcher(() => response({ results: { bindings: [] } })),
+    async (ms) => {
+      waits.push(ms);
+      t += ms;
+    },
+    () => t,
+    undefined,
+    silent,
+  );
+  await client.lookup(record());
+  assert.equal(waits.length, 0);
+  await client.lookup(record());
+  assert.equal(waits.length, 1);
+  assert.ok(waits[0] >= 1000);
+  // A different service is not delayed by the previous one.
+  waits.length = 0;
+  const mixed = new KnowledgeClient(
+    fetcher((url) =>
+      url.hostname === "query.wikidata.org"
+        ? response(matches())
+        : url.hostname === "www.wikidata.org"
+          ? response(fixture())
+          : response({ query: { pages: [{ extract: "x" }] } }),
+    ),
+    async (ms) => {
+      waits.push(ms);
+      t += ms;
+    },
+    () => t,
+    undefined,
+    silent,
+  );
+  await mixed.lookup(record());
+  assert.equal(waits.length, 0);
+});
+
+test("matches and entities are cached, so a second album with the same artist skips them", async () => {
+  const hosts: string[] = [];
+  const queries: string[] = [];
+  const ids: string[] = [];
+  const cache = memoryCache();
+  const client = new KnowledgeClient(
+    fetcher((url) => {
+      hosts.push(url.hostname);
+      if (url.hostname === "query.wikidata.org") {
+        const q = url.searchParams.get("query")!;
+        queries.push(q);
+        return response({
+          results: {
+            bindings: [
+              ...(q.includes('"123"') ? [binding("P1954", "123", "Q100")] : []),
+              ...(q.includes('"42"') ? [binding("P1953", "42", "Q200")] : []),
+            ],
+          },
+        });
+      }
+      if (url.hostname === "www.wikidata.org") {
+        ids.push(url.searchParams.get("ids")!);
+        const all = fixture().entities;
+        return response({
+          entities: Object.fromEntries(
+            url.searchParams
+              .get("ids")!
+              .split("|")
+              .map((q) => [q, all[q]]),
+          ),
+        });
+      }
+      return response({ query: { pages: [{ extract: "x" }] } });
+    }),
+    noWait,
+    () => now,
+    cache,
+    silent,
+  );
+  const first = await client.lookup(record());
+  assert.equal(first.dates.length, 3);
+  assert.equal(queries.length, 1);
+  // Second album (no master in Wikidata) shares artist 42.
+  queries.length = 0;
+  ids.length = 0;
+  const again = await client.lookup({ ...record(), masterId: 123 });
+  assert.equal(queries.length, 0);
+  assert.equal(ids.length, 0);
+  assert.equal(again.dates.length, 3);
+  const other = await client.lookup({ ...record(), masterId: 999 });
+  assert.equal(queries.length, 1);
+  assert.ok(!queries[0].includes('"42"'));
+  assert.ok(queries[0].includes('"999"'));
+  assert.equal(ids.length, 0);
+  assert.equal(other.artists!.length, 1);
+  assert.equal(other.artists![0].artistId, 42);
+});
+
+test("excerpts for album and artists are bundled per language with title mapping", async () => {
+  const data = fixture();
+  data.entities.Q100.sitelinks = { enwiki: { title: "example album" } };
+  data.entities.Q200.sitelinks = { enwiki: { title: "Example Musician" } };
+  const seen: string[] = [];
+  const cache = memoryCache();
+  const client = new KnowledgeClient(
+    fetcher((url) => {
+      if (url.hostname === "query.wikidata.org") return response(matches());
+      if (url.hostname === "www.wikidata.org") return response(data);
+      seen.push(url.searchParams.get("titles")!);
+      return response({
+        query: {
+          normalized: [{ from: "example album", to: "Example album" }],
+          redirects: [{ from: "Example Musician", to: "Musician (redirect)" }],
+          pages: [
+            { title: "Musician (redirect)", extract: "Artist text." },
+            { title: "Example album", extract: "Album text." },
+          ],
+        },
+      });
+    }),
+    noWait,
+    () => now,
+    cache,
+    silent,
+  );
+  const result = await client.lookup(record());
+  assert.deepEqual(seen, ["example album|Example Musician"]);
+  assert.equal(result.summary, "Album text.");
+  assert.equal(result.artists![0].summary, "Artist text.");
+  assert.ok(
+    cache.get("wikiExcerpt:en:Example Musician", null as unknown) !== null,
+  );
+});
+
+test("rate-limit cooldown doubles with consecutive 429s and resets after a success", async () => {
+  const { config, cleanup } = setup();
+  let limited = true;
+  let t = now;
+  const service = new Service(
+    { ...config, token: "fixture", wikiEnabled: true },
+    {
+      now: () => t,
+      wait: noWait,
+      log: silent,
+      random: () => 0.5,
+      fetcher: fetcher(() =>
+        limited
+          ? new Response("{}", {
+              status: 429,
+              headers: { "Retry-After": "20" },
+            })
+          : response({ results: { bindings: [] } }),
+      ),
+    },
+  );
+  try {
+    const [a, b] = twoRecords();
+    service.store.put(a);
+    service.store.put(b);
+    await service.enrichRecords();
+    // 30 s floor (streak 0) + 10 % jitter
+    assert.equal(service.store.get("wikiRetryAfter", 0), t + 33000);
+    assert.equal(service.store.get("wikiRateStreak", 0), 1);
+    service.store.set("wikiRetryAfter", 0);
+    await service.enrichRecords();
+    assert.equal(service.store.get("wikiRetryAfter", 0), t + 66000);
+    service.store.set("wikiRetryAfter", 0);
+    limited = false;
+    t += 20 * 60000;
+    await service.enrichRecords();
+    assert.equal(service.store.get("wikiRateStreak", 0), 0);
+  } finally {
+    await service.close();
+    cleanup();
+  }
 });
