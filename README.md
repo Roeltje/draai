@@ -41,6 +41,8 @@ Open de lokale URL die de ontwikkelserver toont. Zonder Discogs-token werkt de d
 
 De aanbevolen installatie is een niet-geprivilegieerde Proxmox LXC met Ubuntu 24.04 of 26.04. Zie de [installatiehandleiding](docs/INSTALLATIE.md#proxmox-lxc-aanbevolen-installatie) en de aparte [handleiding voor bijwerken](docs/UPDATEN.md). Een gebruiker heeft installatie en bijwerken op Ubuntu 26.04 bevestigd. De Raspberry Pi-weergave is nog niet op echte hardware getest.
 
+Heb je al een Docker-host? Dan kan het ook met `cp .env.example .env` en `docker compose up -d --build`. Zie [Docker](docs/INSTALLATIE.md#docker) voor bijwerken en back-ups.
+
 Draai heeft geen ingebouwde login of toegangsbeheer. Gebruik het op een vertrouwd LAN of via VPN, of zet een beveiligde authenticatieproxy ervoor. HTTPS alleen beveiligt de verbinding maar voegt geen login toe. Stel de app niet rechtstreeks open aan het internet. Bewaar tokens in de serverconfiguratie (`.env` of `/etc/draai.env`), nooit in browsercode of een publieke repository. Zie ook [veilig gebruik](SECURITY.md).
 
 ## Licentie en gegevens

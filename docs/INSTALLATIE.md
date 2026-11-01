@@ -1,6 +1,6 @@
 # Installatie en beheer
 
-Deze handleiding beschrijft lokale ontwikkeling en een productie-installatie in een niet-geprivilegieerde Proxmox LXC.
+Deze handleiding beschrijft lokale ontwikkeling een productie-installatie in een niet-geprivilegieerde Proxmox LXC en een alternatieve installatie met [Docker](#docker).
 
 ## Lokaal ontwikkelen
 
@@ -238,6 +238,64 @@ systemctl start draai
 ```
 
 Gebruik voor herstel van de demo `demo.sqlite` in plaats van `live.sqlite`. Verwijder of vervang nooit actieve databasebestanden terwijl Draai draait.
+
+## Docker
+
+Docker is een extra installatieroute naast de LXC-scripts, handig als je al een Docker-host hebt. Je hebt Docker Engine met de Compose-plug-in nodig. Er is geen gepubliceerd image: je bouwt het zelf uit de repository. Het image bevat alleen de gebouwde client, de servercode en de productieafhankelijkheden. Het draait als de niet-rootgebruiker `node` en bevat geen `.env` of sleutels.
+
+```sh
+git clone https://github.com/Roeltje/draai.git
+cd draai
+cp .env.example .env
+docker compose up -d --build
+```
+
+Open daarna `http://<adres-van-de-host>:3210`. Zonder `DISCOGS_TOKEN` start Draai met de fictieve demodata. Vul `.env` aan zoals bij [Lokaal ontwikkelen](#lokaal-ontwikkelen) en herstart met `docker compose up -d`. `.env.example` blijft de lijst van alle variabelen. In `compose.yaml` gaan `HOST=0.0.0.0`, `PORT=3210` en `DATA_DIR=/data` voor op `.env`, dus de container luistert altijd op poort 3210 en schrijft naar het volume. Kies een andere poort op de host door de linkerkant van `ports` aan te passen, bijvoorbeeld `"8080:3210"`.
+
+De databases staan in het named volume `draai-data` (aangekoppeld op `/data`). Het volume blijft bewaard bij `docker compose down` en bij een nieuwe build. Alleen `docker compose down -v` verwijdert het. De container heeft een healthcheck op `/api/health`. Zie de status met `docker compose ps` en de logs met `docker compose logs -f draai`. Ook hier geldt: Draai heeft geen login. Publiceer de poort alleen op een vertrouwd LAN of achter een authenticatieproxy, zie [Toegang via een HTTPS-reverse-proxy](#toegang-via-een-https-reverse-proxy).
+
+### Bijwerken met Docker
+
+Haal de nieuwe code op, bouw het image opnieuw (`--pull` haalt ook een bijgewerkt `node:24-slim`-basisimage op) en start de container opnieuw:
+
+```sh
+git pull --ff-only origin main
+docker compose build --pull
+docker compose up -d
+```
+
+Gebruik je een image uit een eigen registry in plaats van `build: .`? Vervang dan de buildstap door `docker compose pull`. Maak vóór een update een back-up, zie hieronder. De data in het volume blijft bij een update staan.
+
+### Back-up met Docker
+
+Maak tijdens het draaien een consistente back-up van de actieve database (demo of live) en kopieer die naar de host:
+
+```sh
+naam="draai-$(date +%Y%m%d-%H%M%S).sqlite"
+docker compose exec draai node scripts/backup.mjs "/data/$naam"
+docker compose cp "draai:/data/$naam" "./$naam"
+docker compose exec draai rm "/data/$naam"
+```
+
+Voor een koude back-up van het hele volume (beide databases en SQLite-sidecars) stop je eerst de container:
+
+```sh
+docker compose stop
+docker run --rm --volumes-from "$(docker compose ps -aq draai)" -v "$PWD":/backup \
+  node:24-slim tar czf /backup/draai-data.tgz -C /data .
+docker compose start
+```
+
+Herstel van zo'n archief doe je terwijl de container gestopt is. Bewaar het bestaande volume eerst apart. Daarna:
+
+```sh
+docker compose stop
+docker run --rm --volumes-from "$(docker compose ps -aq draai)" -v "$PWD":/backup \
+  node:24-slim sh -c 'rm -rf /data/* && tar xzpf /backup/draai-data.tgz -C /data'
+docker compose start
+```
+
+Bewaar back-ups en `.env` buiten de repositorymap op een andere schijf of machine, en bescherm ze: ze kunnen tokens en persoonlijke luisternotities bevatten.
 
 ## Functionaliteitsgrenzen
 

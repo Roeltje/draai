@@ -120,3 +120,7 @@ MIT-licentie, portable ontwikkelinstructies, SECURITY.md, korte LXC-updatehandle
 - Productielog na #14: 429's van Wikidata-API en Wikipedia met korte Retry-After, telkens kort na het hervatten.
 - Nu: 1 s tussen aanvragen per dienst, cache voor SPARQL-treffers en ingekorte entiteiten, Wikipedia-fragmenten per taal gebundeld, rate-limit-pauze volgt Retry-After met verdubbelend minimum en spreiding.
 - Sonnet bouwde; hoofdagent reviewde en voegde main (#16) samen. 104 tests en typecheck slagen. Niet tegen de echte Wikimedia-diensten getest.
+
+## Docker-installatieroute (D01) — 1 november 2026
+- `Dockerfile` (multi-stage op `node:24-slim`, pnpm via corepack, alleen productie-deps, niet-root, `/data`-volume, healthcheck op `/api/health`), `.dockerignore` en `compose.yaml` toegevoegd naast de LXC-scripts. Docs: Docker-sectie in INSTALLATIE.md met bijwerken en back-up; vermelding in de README.
+- CI bouwt nu het image, start het met demodata en controleert `/`, `/api/health` en de Docker-healthcheck. Lokaal was geen Docker beschikbaar: de runtime-stap is lokaal nagebootst (prod-install, dezelfde bestanden en env). `/`, health en healthcheck-opdracht slaagden.

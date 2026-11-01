@@ -1,0 +1,19 @@
+services:
+  draai:
+    build: .
+    image: draai:local
+    env_file: .env
+    # Deze waarden gaan voor op .env, zodat de container altijd op /data en
+    # alle interfaces luistert, ook met de HOST/DATA_DIR uit .env.example.
+    environment:
+      HOST: 0.0.0.0
+      PORT: "3210"
+      DATA_DIR: /data
+    ports:
+      - "3210:3210"
+    volumes:
+      - draai-data:/data
+    restart: unless-stopped
+
+volumes:
+  draai-data:
