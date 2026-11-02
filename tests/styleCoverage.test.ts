@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { styleCoverage } from "../src/styleCoverage.ts";
+import { ruleOrigin, styleCoverage } from "../src/styleCoverage.ts";
 import { demoRecords } from "../server/demo.ts";
 import { METADATA_MAX_AGE } from "../src/freshness.ts";
 const now = Date.parse("2026-10-30T12:00:00Z");
@@ -66,4 +66,25 @@ test("coverage uses fresh available LPs and reports empty pools honestly", () =>
     missingStyles: 1,
     styles: [],
   });
+});
+
+test("rule origin compares with defaults, ignoring case, spacing and mood order", () => {
+  const defaults = [
+    { name: "Soul Jazz", moods: ["warm", "nostalgie"] },
+    { name: "Drone", moods: [] },
+  ];
+  assert.equal(
+    ruleOrigin({ name: " soul  jazz", moods: ["nostalgie", "warm"] }, defaults),
+    "standaard",
+  );
+  assert.equal(
+    ruleOrigin({ name: "Soul Jazz", moods: ["warm"] }, defaults),
+    "aangepast",
+  );
+  assert.equal(ruleOrigin({ name: "Drone", moods: [] }, defaults), "standaard");
+  assert.equal(
+    ruleOrigin({ name: "Drone", moods: ["rust"] }, defaults),
+    "aangepast",
+  );
+  assert.equal(ruleOrigin({ name: "Zouk", moods: [] }, defaults), "eigen");
 });

@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { Check, Plus, SlidersHorizontal, X } from "lucide-react";
+import { Check, Plus, RotateCcw, SlidersHorizontal, X } from "lucide-react";
 import type { Mood, RecordItem, SelectionPreferences } from "../shared/types";
 import {
   DEFAULT_PREFERENCES,
   DEFAULT_WEATHER_THRESHOLDS,
 } from "../shared/selection";
 import { DEFAULT_SIDE_TIMER_SETTINGS } from "../shared/sideTimer";
-import { normalizeStyle, styleCoverage } from "./styleCoverage";
+import { normalizeStyle, ruleOrigin, styleCoverage } from "./styleCoverage";
 const labels: { id: Mood; name: string }[] = [
   { id: "rust", name: "Rustig" },
   { id: "warm", name: "Knus" },
@@ -50,9 +50,15 @@ function MoodChoices({
   );
 }
 type Rule = { name: string; moods: Mood[] };
+const originLabel = {
+  standaard: "standaard",
+  aangepast: "aangepast",
+  eigen: "eigen",
+} as const;
 function RuleEditor({
   kind,
   rules,
+  defaults,
   collection,
   disabled,
   onChange,
@@ -61,6 +67,7 @@ function RuleEditor({
   focusRule?: string;
   kind: "Stijl" | "Genre";
   rules: Rule[];
+  defaults: Rule[];
   collection: string[];
   disabled: boolean;
   onChange: (rules: Rule[]) => void;
@@ -81,6 +88,14 @@ function RuleEditor({
   const noMatches = rules.length > 0 && matching.length === 0;
   const visible = showAll || noMatches ? rules : matching;
   const active = visible.find((rule) => rule.name === selected) || visible[0];
+  const origin = (rule: Rule) => ruleOrigin(rule, defaults);
+  const changed = rules.filter((rule) => origin(rule) !== "standaard").length;
+  const activeOrigin = active && origin(active);
+  const activeDefault =
+    activeOrigin === "aangepast" &&
+    defaults.find(
+      (rule) => normalizeStyle(rule.name) === normalizeStyle(active.name),
+    );
   const add = () => {
     const value = name.trim();
     if (!value) return;
@@ -96,7 +111,10 @@ function RuleEditor({
     <details className="preference-section" open={kind === "Stijl"}>
       <summary>
         {kind === "Stijl" ? "Stijlen" : "Genres"} &amp; stemming{" "}
-        <span className="rule-count">{rules.length} verbanden</span>
+        <span className="rule-count">
+          {rules.length} verbanden
+          {changed ? ` · ${changed} door jou aangepast` : ""}
+        </span>
       </summary>
       <p className="preference-hint">
         {kind === "Stijl"
@@ -137,23 +155,51 @@ function RuleEditor({
               <option value={rule.name} key={rule.name}>
                 {rule.name}
                 {!rule.moods.length ? " · uit" : ""}
+                {origin(rule) !== "standaard"
+                  ? ` · ${originLabel[origin(rule)]}`
+                  : ""}
               </option>
             ))}
           </select>
           {active && (
             <div className="genre-rule">
               <div>
-                <strong>{active.name}</strong>
-                <button
-                  type="button"
-                  aria-label={`Regel voor ${active.name} verwijderen`}
-                  disabled={disabled}
-                  onClick={() =>
-                    onChange(rules.filter((rule) => rule !== active))
-                  }
-                >
-                  <X size={16} />
-                </button>
+                <span className="rule-title">
+                  <strong>{active.name}</strong>
+                  <span className={`rule-origin ${activeOrigin}`}>
+                    {originLabel[activeOrigin!]}
+                  </span>
+                </span>
+                <span className="rule-actions">
+                  {activeDefault && (
+                    <button
+                      type="button"
+                      className="rule-restore"
+                      disabled={disabled}
+                      onClick={() =>
+                        onChange(
+                          rules.map((rule) =>
+                            rule === active
+                              ? { ...rule, moods: [...activeDefault.moods] }
+                              : rule,
+                          ),
+                        )
+                      }
+                    >
+                      <RotateCcw size={13} /> Standaard terugzetten
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    aria-label={`Regel voor ${active.name} verwijderen`}
+                    disabled={disabled}
+                    onClick={() =>
+                      onChange(rules.filter((rule) => rule !== active))
+                    }
+                  >
+                    <X size={16} />
+                  </button>
+                </span>
               </div>
               <MoodChoices
                 label={`Stemmingen voor ${active.name}`}
@@ -457,6 +503,10 @@ export function PreferencesEditor({
           name: rule.style,
           moods: rule.moods,
         }))}
+        defaults={(DEFAULT_PREFERENCES.styleMoods || []).map((rule) => ({
+          name: rule.style,
+          moods: rule.moods,
+        }))}
         disabled={disabled}
         onChange={(rules) =>
           change({
@@ -472,6 +522,10 @@ export function PreferencesEditor({
         kind="Genre"
         collection={genres}
         rules={draft.genreMoods.map((rule) => ({
+          name: rule.genre,
+          moods: rule.moods,
+        }))}
+        defaults={DEFAULT_PREFERENCES.genreMoods.map((rule) => ({
           name: rule.genre,
           moods: rule.moods,
         }))}

@@ -54,3 +54,19 @@ export function styleCoverage(
     ),
   };
 }
+export type RuleOrigin = "standaard" | "aangepast" | "eigen";
+// Rules are stored without provenance, so compare against the shipped defaults.
+export function ruleOrigin(
+  rule: { name: string; moods: string[] },
+  defaults: { name: string; moods: string[] }[],
+): RuleOrigin {
+  const match = defaults.find(
+    (candidate) => normalizeStyle(candidate.name) === normalizeStyle(rule.name),
+  );
+  if (!match) return "eigen";
+  const moods = new Set(rule.moods);
+  return moods.size === new Set(match.moods).size &&
+    match.moods.every((mood) => moods.has(mood))
+    ? "standaard"
+    : "aangepast";
+}
