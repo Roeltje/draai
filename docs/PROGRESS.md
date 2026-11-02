@@ -124,3 +124,7 @@ MIT-licentie, portable ontwikkelinstructies, SECURITY.md, korte LXC-updatehandle
 ## Standaard/eigen-badges bij stemmingsverbanden (M02) — 1 november 2026
 - Elk stijl- en genreverband toont nu `standaard`, `aangepast` of `eigen`, afgeleid door vergelijking met de meegeleverde defaults (opslag ongewijzigd). Keuzelijst en kop tonen hoeveel verbanden je aanpaste; per aangepast verband een knop "Standaard terugzetten" (alleen in concept tot bewaren).
 - Unit-test voor `ruleOrigin`; 112 tests, typecheck en build slagen. In de browser gecontroleerd op breed en 375 px.
+
+## Docker-installatieroute (D01) — 1 november 2026
+- `Dockerfile` (multi-stage op `node:24-slim`, pnpm via corepack, alleen productie-deps, niet-root, `/data`-volume, healthcheck op `/api/health`), `.dockerignore` en `compose.yaml` toegevoegd naast de LXC-scripts. Docs: Docker-sectie in INSTALLATIE.md met bijwerken en back-up; vermelding in de README.
+- CI bouwt nu het image, start het met demodata en controleert `/`, `/api/health` en de Docker-healthcheck. Lokaal was geen Docker beschikbaar: de runtime-stap is lokaal nagebootst (prod-install, dezelfde bestanden en env). `/`, health en healthcheck-opdracht slaagden.
