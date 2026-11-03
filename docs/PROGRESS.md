@@ -112,7 +112,7 @@ MIT-licentie, portable ontwikkelinstructies, SECURITY.md, korte LXC-updatehandle
 - 96 tests en typecheck slagen. Niet tegen de echte Discogs-API getest.
 
 ## Kioskweergave in lagen (K01) — 1 november 2026
-- `/display` schaalt nu in lagen met pure CSS-mediaqueries op breedte én hoogte: klein hoes/titel/artiest, middel (≥900×560) meta en tracklijst per kant, groot (≥1600×900) ook credits, vers weer en eerdere draaien. Scherm is exact de viewport en scrolt nooit; geen track of kant gemarkeerd als spelend; Discogs-bron in elke laag.
+- `/display` schaalt nu in lagen met pure CSS-mediaqueries op breedte én hoogte: klein hoes/titel/artiest, middel (≥900×560) meta en tracklijst per kant, groot (≥1600×900, later verlaagd naar ≥1360×760) ook credits, vers weer en eerdere draaien. Scherm is exact de viewport en scrolt nooit; geen track of kant gemarkeerd als spelend; Discogs-bron in elke laag.
 - Hulpfuncties in `src/displayInfo.ts` met unit-tests; demo-1 kreeg fictieve credits.
 - Sonnet bouwde; hoofdagent controleerde in de browser op 540×320, 1024×600, 1920×1080 en 375×812 (geen overflow) en vergrootte titel/kleine tekst op het grote scherm. Niet op het echte kioskscherm of een Pi gecontroleerd.
 
@@ -128,3 +128,10 @@ MIT-licentie, portable ontwikkelinstructies, SECURITY.md, korte LXC-updatehandle
 ## Docker-installatieroute (D01) — 1 november 2026
 - `Dockerfile` (multi-stage op `node:24-slim`, pnpm via corepack, alleen productie-deps, niet-root, `/data`-volume, healthcheck op `/api/health`), `.dockerignore` en `compose.yaml` toegevoegd naast de LXC-scripts. Docs: Docker-sectie in INSTALLATIE.md met bijwerken en back-up; vermelding in de README.
 - CI bouwt nu het image, start het met demodata en controleert `/`, `/api/health` en de Docker-healthcheck. Lokaal was geen Docker beschikbaar: de runtime-stap is lokaal nagebootst (prod-install, dezelfde bestanden en env). `/`, health en healthcheck-opdracht slaagden.
+
+## Display: complete tracklist en albumverhaal (K01-vervolg) — 3 november 2026
+- Tracklist toont alle kanten (tot 32/48 nummers), bij meer dan 14 nummers compacter zonder duur. Kant D van dubbelalbums valt niet meer weg.
+- Grote laag vanaf 1360×760 (MacBook Air haalt hem), met kort albumverhaal uit Wikipedia: alleen hele zinnen tot ±320 tekens, met bron en licentie.
+- Niets wordt halverwege afgekapt: past de tekstkolom niet, dan vallen extra's in hun geheel weg, eerst het verhaal, dan credits, dan weer en "eerder gedraaid". De tracklist en de Discogs-bron blijven.
+- Albumpagina toont album- en artiestteksten ook alleen nog in hele zinnen (`src/wikiText.ts`, afkortingen als "o.a." en initialen breken geen zin).
+- 116 tests en build slagen. In de browser gecontroleerd op 1470×800, 1920×1080 en 1024×600 met een tijdelijk dubbelalbum van 24 nummers. Niet op de echte TV.

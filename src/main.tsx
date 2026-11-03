@@ -476,6 +476,10 @@ function App() {
           <>
             <DisplayNowPlaying
               session={active}
+              albumInfo={
+                records.find((record) => record.id === active.record.id)
+                  ?.albumInfo ?? active.record.albumInfo
+              }
               history={state.history}
               weather={state.weather}
               demo={demo}

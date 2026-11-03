@@ -4084,6 +4084,9 @@ h2 {
   border-top: 1px solid #53564c;
   padding-top: 1.5vh;
 }
+.display-extra:empty {
+  display: none;
+}
 .display-extra p {
   font-size: 1em;
   margin: 0.4em 0 0;
@@ -4097,6 +4100,32 @@ h2 {
 }
 .display-credits li {
   break-inside: avoid;
+}
+.display-tracks.dense {
+  font-size: clamp(11px, 1.6vh, 18px);
+  line-height: 1.25;
+}
+.display-tracks.dense li {
+  grid-template-columns: 2.4em 1fr;
+}
+.display-tracks.dense li > span:last-child {
+  display: none;
+}
+.display-story {
+  font-size: clamp(14px, 1.9vh, 22px);
+  line-height: 1.5;
+  color: #cfcabd;
+  max-width: 60ch;
+  margin-top: 1.5vh;
+}
+.display-content .display-story p {
+  font-size: 1em;
+  margin: 0;
+}
+.display-content .display-story .display-story-source {
+  color: #a5a59a;
+  font-size: 0.7em;
+  margin-top: 0.4em;
 }
 
 @media (min-width: 900px) and (min-height: 560px) {
@@ -4118,6 +4147,10 @@ h2 {
   .display-content > .cover {
     max-height: 100%;
   }
+  .display-text {
+    max-height: 100%;
+    overflow: hidden;
+  }
   .display-content h1 {
     font-size: clamp(34px, 6vh, 64px);
     margin: 1vh 0;
@@ -4134,7 +4167,7 @@ h2 {
     display: none;
   }
 }
-@media (min-width: 1600px) and (min-height: 900px) {
+@media (min-width: 1360px) and (min-height: 760px) {
   .display-layer-not-large {
     display: none;
   }

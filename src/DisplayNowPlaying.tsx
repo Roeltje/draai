@@ -1,5 +1,15 @@
-import type { ReactNode } from "react";
-import type { ListeningSession, WeatherState } from "../shared/types";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import type {
+  AlbumInfo,
+  ListeningSession,
+  WeatherState,
+} from "../shared/types";
 import {
   displayCredits,
   formatDisplayDate,
@@ -8,6 +18,7 @@ import {
   playStats,
   recordMeta,
 } from "./displayInfo";
+import { wholeSentences } from "./wikiText";
 
 function Tracklist({
   tracks,
@@ -20,8 +31,9 @@ function Tracklist({
 }) {
   const { groups, hidden } = groupTracks(tracks, limit);
   if (!groups.length) return null;
+  const count = groups.reduce((sum, group) => sum + group.tracks.length, 0);
   return (
-    <div className={`display-tracks ${className}`}>
+    <div className={`display-tracks ${count > 14 ? "dense" : ""} ${className}`}>
       {groups.map((group, i) => (
         <section key={`${group.side}-${i}`}>
           {group.side && <h3>Kant {group.side}</h3>}
@@ -43,6 +55,7 @@ function Tracklist({
 
 export function DisplayNowPlaying({
   session,
+  albumInfo,
   history,
   weather,
   demo,
@@ -50,6 +63,7 @@ export function DisplayNowPlaying({
   source,
 }: {
   session: ListeningSession;
+  albumInfo?: AlbumInfo;
   history: ListeningSession[];
   weather: WeatherState;
   demo: boolean;
@@ -60,6 +74,26 @@ export function DisplayNowPlaying({
   const meta = recordMeta(record);
   const { credits, hidden: moreCredits } = displayCredits(record.credits);
   const stats = playStats(history, record, session.id);
+  const story =
+    albumInfo?.status === "ready" ? wholeSentences(albumInfo.summary, 320) : "";
+  // Extras drop out whole, least important first, until everything fits:
+  // story, then credits, then weather and play count. The tracklist always wins.
+  const textRef = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState(() => `${innerWidth}x${innerHeight}`);
+  useEffect(() => {
+    const onResize = () => setSize(`${innerWidth}x${innerHeight}`);
+    addEventListener("resize", onResize);
+    return () => removeEventListener("resize", onResize);
+  }, []);
+  const fitKey = `${record.id}|${size}|${story}`;
+  const [dropped, setDropped] = useState({ key: "", level: 0 });
+  const level = dropped.key === fitKey ? dropped.level : 0;
+  const showStory = !!story && level < 1;
+  useLayoutEffect(() => {
+    const text = textRef.current;
+    if (level < 3 && text && text.scrollHeight > text.clientHeight + 1)
+      setDropped({ key: fitKey, level: level + 1 });
+  });
   const fresh = weather.status === "fresh";
   const rain = weather.rainRate ?? 0;
   const weatherText = fresh
@@ -75,23 +109,33 @@ export function DisplayNowPlaying({
   return (
     <div className="display-content">
       {cover}
-      <div className="display-text">
+      <div className="display-text" ref={textRef}>
         <span className="eyebrow">NU LUISTEREN {demo ? " / DEMO" : ""}</span>
         <h1>{record.title}</h1>
         <h2>{record.artist}</h2>
         {meta && <p className="display-meta display-layer-medium">{meta}</p>}
         <Tracklist
           tracks={record.tracks}
-          limit={12}
+          limit={32}
           className="display-layer-medium display-layer-not-large"
         />
         <Tracklist
           tracks={record.tracks}
-          limit={24}
+          limit={48}
           className="display-layer-large"
         />
+        {showStory && (
+          <div className="display-story display-layer-large">
+            <p>{story}</p>
+            <p className="display-story-source">
+              {albumInfo?.demo
+                ? "Fictief albumverhaal (demo)"
+                : `Wikipedia${albumInfo?.language ? ` (${albumInfo.language})` : ""} · CC BY-SA 4.0`}
+            </p>
+          </div>
+        )}
         <div className="display-extra display-layer-large">
-          {credits.length > 0 && (
+          {level < 2 && credits.length > 0 && (
             <div className="display-credits">
               <h3>Credits</h3>
               <ul>
@@ -105,13 +149,13 @@ export function DisplayNowPlaying({
               </ul>
             </div>
           )}
-          {weatherText && weather.observedAt && (
+          {level < 3 && weatherText && weather.observedAt && (
             <p>
               Buiten: {weatherText} · gemeten om{" "}
               {formatDisplayTime(weather.observedAt)}
             </p>
           )}
-          {stats.count > 0 && stats.lastAt && (
+          {level < 3 && stats.count > 0 && stats.lastAt && (
             <p>
               Eerder gedraaid: {stats.count}×, laatst op{" "}
               {formatDisplayDate(stats.lastAt)}
