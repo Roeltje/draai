@@ -1,5 +1,6 @@
 import { ArrowUpRight, BookOpen, RefreshCw } from "lucide-react";
 import type { RecordItem, MusicDate } from "../shared/types";
+import { wholeSentences } from "./wikiText";
 
 const dateLabels: Record<MusicDate["kind"], string> = {
   release: "Releasedatum volgens Wikidata",
@@ -41,12 +42,13 @@ export function AlbumStory({
   onRefresh: () => void;
 }) {
   const info = record.albumInfo;
+  const summary = wholeSentences(info?.summary ?? "");
   const isDemo = record.demo || info?.demo;
   const statusText = !info
     ? "Nog geen gecontroleerd albumverhaal. Draai zoekt via de exacte Discogs-koppeling, zonder op artiestnaam of titel te gokken."
     : {
         ready:
-          info.summary ||
+          summary ||
           "Deze plaat is gekoppeld aan Wikidata. Er is nog geen Wikipedia-samenvatting beschikbaar.",
         not_found:
           "Nog geen betrouwbare koppeling met Wikipedia of Wikidata gevonden. Je kunt de informatie later opnieuw ophalen.",
@@ -126,7 +128,7 @@ export function AlbumStory({
               Wikidata · datums <ArrowUpRight size={12} />
             </a>
           )}
-          {info.summary && info.wikipediaUrl && (
+          {summary && info.wikipediaUrl && (
             <span>
               Ingekort fragment uit Wikipedia ·{" "}
               <a
@@ -153,20 +155,22 @@ export function AlbumStory({
           )}
         </div>
       )}
-      {!!info?.artists?.some((artist) => artist.summary) && (
+      {!!info?.artists?.some((artist) => wholeSentences(artist.summary)) && (
         <div className="artist-stories">
           <h3>De mensen achter de muziek</h3>
           {info.artists
             .filter(
               (artist, index, all) =>
-                artist.summary &&
+                wholeSentences(artist.summary) &&
                 all.findIndex((other) => other.artistId === artist.artistId) ===
                   index,
             )
             .map((artist) => (
               <details key={artist.artistId} className="artist-story">
                 <summary>{artist.name}</summary>
-                <p className="story-summary">{artist.summary}</p>
+                <p className="story-summary">
+                  {wholeSentences(artist.summary)}
+                </p>
                 {isDemo ? (
                   <p className="story-note">
                     Fictief artiestverhaal voor de voorbeeldcollectie.
