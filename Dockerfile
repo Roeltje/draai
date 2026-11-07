@@ -1,7 +1,8 @@
 # syntax=docker/dockerfile:1
 
-# Bouwstap: alle afhankelijkheden en de gebouwde client.
-FROM node:24-slim AS build
+# Bouwstap: alle afhankelijkheden en de gebouwde client. Draait op het
+# platform van de bouwmachine; de client is platformonafhankelijk.
+FROM --platform=$BUILDPLATFORM node:24-slim AS build
 WORKDIR /app
 RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./

@@ -241,30 +241,59 @@ Gebruik voor herstel van de demo `demo.sqlite` in plaats van `live.sqlite`. Verw
 
 ## Docker
 
-Docker is een extra installatieroute naast de LXC-scripts, handig als je al een Docker-host hebt. Je hebt Docker Engine met de Compose-plug-in nodig. Er is geen gepubliceerd image: je bouwt het zelf uit de repository. Het image bevat alleen de gebouwde client, de servercode en de productieafhankelijkheden. Het draait als de niet-rootgebruiker `node` en bevat geen `.env` of sleutels.
+Docker is een extra installatieroute naast de LXC-scripts, handig als je al een Docker-host hebt. Je hebt Docker Engine met de Compose-plug-in nodig. Er is een kant-en-klaar image op `ghcr.io/roeltje/draai` voor `amd64` en `arm64` (ook Raspberry Pi 4/5 met 64-bit OS). Het image bevat alleen de gebouwde client, de servercode en de productieafhankelijkheden. Het draait als de niet-rootgebruiker `node` en bevat geen `.env` of sleutels.
+
+Je hebt alleen `compose.yaml` en `.env` nodig, geen clone:
+
+```sh
+mkdir draai && cd draai
+curl -fsSLO https://raw.githubusercontent.com/Roeltje/draai/main/compose.yaml
+curl -fsSL -o .env https://raw.githubusercontent.com/Roeltje/draai/main/.env.example
+docker compose up -d
+```
+
+Open daarna `http://<adres-van-de-host>:3210`. Zonder `DISCOGS_TOKEN` start Draai met de fictieve demodata. Vul `.env` aan zoals bij [Lokaal ontwikkelen](#lokaal-ontwikkelen) en herstart met `docker compose up -d`. `.env.example` blijft de lijst van alle variabelen. In `compose.yaml` gaan `HOST=0.0.0.0`, `PORT=3210` en `DATA_DIR=/data` voor op `.env`, dus de container luistert altijd op poort 3210 en schrijft naar het volume. Kies een andere poort op de host door de linkerkant van `ports` aan te passen, bijvoorbeeld `"8080:3210"`.
+
+Standaard gebruik je de tag `latest`, de nieuwste release. Wil je een vaste versie, zet dan bijvoorbeeld `DRAAI_VERSION=0.2.0` in `.env`. De beschikbare versies staan bij [Releases](https://github.com/Roeltje/draai/releases).
+
+De databases staan in het named volume `draai-data` (aangekoppeld op `/data`). Het volume blijft bewaard bij `docker compose down` en bij een nieuw image. Alleen `docker compose down -v` verwijdert het. De container heeft een healthcheck op `/api/health`. Zie de status met `docker compose ps` en de logs met `docker compose logs -f draai`. Ook hier geldt: Draai heeft geen login. Publiceer de poort alleen op een vertrouwd LAN of achter een authenticatieproxy, zie [Toegang via een HTTPS-reverse-proxy](#toegang-via-een-https-reverse-proxy).
+
+### Zelf het image bouwen
+
+Wil je niet het gepubliceerde image gebruiken, of draai je een ongereleasede versie van `main`? Bouw dan vanuit een clone met het extra bestand `compose.build.yaml`:
 
 ```sh
 git clone https://github.com/Roeltje/draai.git
 cd draai
 cp .env.example .env
-docker compose up -d --build
+docker compose -f compose.yaml -f compose.build.yaml up -d --build
 ```
-
-Open daarna `http://<adres-van-de-host>:3210`. Zonder `DISCOGS_TOKEN` start Draai met de fictieve demodata. Vul `.env` aan zoals bij [Lokaal ontwikkelen](#lokaal-ontwikkelen) en herstart met `docker compose up -d`. `.env.example` blijft de lijst van alle variabelen. In `compose.yaml` gaan `HOST=0.0.0.0`, `PORT=3210` en `DATA_DIR=/data` voor op `.env`, dus de container luistert altijd op poort 3210 en schrijft naar het volume. Kies een andere poort op de host door de linkerkant van `ports` aan te passen, bijvoorbeeld `"8080:3210"`.
-
-De databases staan in het named volume `draai-data` (aangekoppeld op `/data`). Het volume blijft bewaard bij `docker compose down` en bij een nieuwe build. Alleen `docker compose down -v` verwijdert het. De container heeft een healthcheck op `/api/health`. Zie de status met `docker compose ps` en de logs met `docker compose logs -f draai`. Ook hier geldt: Draai heeft geen login. Publiceer de poort alleen op een vertrouwd LAN of achter een authenticatieproxy, zie [Toegang via een HTTPS-reverse-proxy](#toegang-via-een-https-reverse-proxy).
 
 ### Bijwerken met Docker
 
-Haal de nieuwe code op, bouw het image opnieuw (`--pull` haalt ook een bijgewerkt `node:24-slim`-basisimage op) en start de container opnieuw:
+Maak eerst een back-up (zie hieronder). Haal daarna het nieuwe image op en start de container opnieuw. De data in het volume blijft staan:
 
 ```sh
-git pull --ff-only origin main
-docker compose build --pull
+docker compose pull
 docker compose up -d
 ```
 
-Gebruik je een image uit een eigen registry in plaats van `build: .`? Vervang dan de buildstap door `docker compose pull`. Maak vóór een update een back-up, zie hieronder. De data in het volume blijft bij een update staan.
+Met een vaste `DRAAI_VERSION` pas je eerst het versienummer in `.env` aan. Bouw je zelf, gebruik dan `git pull --ff-only origin main` en daarna `docker compose -f compose.yaml -f compose.build.yaml up -d --build --pull always`.
+
+### Een release maken (beheerder)
+
+Een versietag publiceert automatisch het image en een GitHub-release (`.github/workflows/release.yml`):
+
+1. Zet in `package.json` de nieuwe `version` (bijv. `0.2.0`) via een gewone PR en merge die.
+2. Tag de merge op `main` en push de tag:
+
+   ```sh
+   git switch main && git pull --ff-only
+   git tag v0.2.0
+   git push origin v0.2.0
+   ```
+
+De workflow stopt als de tag niet overeenkomt met `package.json`. Na de eerste release staat het package onder **Packages** in het GitHub-profiel. Controleer daar eenmalig bij **Package settings** dat de zichtbaarheid **Public** is, anders kunnen anderen het image niet ophalen.
 
 ### Back-up met Docker
 

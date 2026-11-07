@@ -36,15 +36,18 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Bouwt zelf via compose.build.yaml in plaats van het image van GHCR te halen.
+    env:
+      COMPOSE_FILE: compose.yaml:compose.build.yaml
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - run: docker build -t draai:ci .
+      - run: docker compose build
       # Start met de demodata uit .env.example, zoals compose.yaml dat doet.
       - run: |
           cp .env.example .env
-          docker compose up -d
+          docker compose up -d --no-build
           for i in $(seq 1 45); do
             [ "$(docker inspect -f '{{.State.Health.Status}}' "$(docker compose ps -q draai)")" = healthy ] && break
             sleep 2
