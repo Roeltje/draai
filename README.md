@@ -41,7 +41,7 @@ Open de lokale URL die de ontwikkelserver toont. Zonder Discogs-token werkt de d
 
 De aanbevolen installatie is een niet-geprivilegieerde Proxmox LXC met Ubuntu 24.04 of 26.04. Zie de [installatiehandleiding](docs/INSTALLATIE.md#proxmox-lxc-aanbevolen-installatie) en de aparte [handleiding voor bijwerken](docs/UPDATEN.md). Een gebruiker heeft installatie en bijwerken op Ubuntu 26.04 bevestigd. De Raspberry Pi-weergave is nog niet op echte hardware getest.
 
-Heb je al een Docker-host? Dan kan het ook met `cp .env.example .env` en `docker compose up -d --build`. Zie [Docker](docs/INSTALLATIE.md#docker) voor bijwerken en back-ups.
+Heb je al een Docker-host? Gebruik dan het kant-en-klare image `ghcr.io/roeltje/draai` (amd64 en arm64): alleen `compose.yaml` en `.env` neerzetten en `docker compose up -d`. Zie [Docker](docs/INSTALLATIE.md#docker) voor installeren, bijwerken en back-ups.
 
 Draai heeft geen ingebouwde login of toegangsbeheer. Gebruik het op een vertrouwd LAN of via VPN, of zet een beveiligde authenticatieproxy ervoor. HTTPS alleen beveiligt de verbinding maar voegt geen login toe. Stel de app niet rechtstreeks open aan het internet. Bewaar tokens in de serverconfiguratie (`.env` of `/etc/draai.env`), nooit in browsercode of een publieke repository. Zie ook [veilig gebruik](SECURITY.md).
 
@@ -53,4 +53,4 @@ De broncode is beschikbaar onder de [GNU AGPL-3.0](LICENSE). Je mag Draai gebrui
 
 Ideeën en fouten kun je melden via [GitHub Issues](https://github.com/Roeltje/draai/issues). Beschrijf wat je verwachtte en wat er gebeurde; deel geen tokens, configuratiebestanden of persoonlijke database. Zie [de backlog](docs/TODO.md) voor plannen en [de verificatie](docs/VERIFICATIE.md) voor uitgevoerde controles.
 
-Ontwikkelcommando’s: `pnpm check` voor typecontrole, `pnpm test` voor tests en `pnpm build` voor de productiebuild. Daarna start `pnpm start` de app op poort 3210. Docker, pushmeldingen en audioherkenning zijn nog niet beschikbaar.
+Ontwikkelcommando’s: `pnpm check` voor typecontrole, `pnpm test` voor tests en `pnpm build` voor de productiebuild. Daarna start `pnpm start` de app op poort 3210. Pushmeldingen en audioherkenning zijn nog niet beschikbaar.

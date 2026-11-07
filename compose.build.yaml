@@ -1,0 +1,7 @@
+# Bouwt het image zelf uit deze repository in plaats van het gepubliceerde
+# image te gebruiken:
+#   docker compose -f compose.yaml -f compose.build.yaml up -d --build
+services:
+  draai:
+    build: .
+    image: draai:local

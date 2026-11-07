@@ -1,7 +1,8 @@
 services:
   draai:
-    build: .
-    image: draai:local
+    # Gepubliceerd image; zet DRAAI_VERSION in .env om een versie vast te zetten.
+    # Zelf bouwen: docker compose -f compose.yaml -f compose.build.yaml up -d --build
+    image: ghcr.io/roeltje/draai:${DRAAI_VERSION:-latest}
     env_file: .env
     # Deze waarden gaan voor op .env, zodat de container altijd op /data en
     # alle interfaces luistert, ook met de HOST/DATA_DIR uit .env.example.

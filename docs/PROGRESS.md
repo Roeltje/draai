@@ -135,3 +135,8 @@ MIT-licentie, portable ontwikkelinstructies, SECURITY.md, korte LXC-updatehandle
 - Niets wordt halverwege afgekapt: past de tekstkolom niet, dan vallen extra's in hun geheel weg, eerst het verhaal, dan credits, dan weer en "eerder gedraaid". De tracklist en de Discogs-bron blijven.
 - Albumpagina toont album- en artiestteksten ook alleen nog in hele zinnen (`src/wikiText.ts`, afkortingen als "o.a." en initialen breken geen zin).
 - 116 tests en build slagen. In de browser gecontroleerd op 1470×800, 1920×1080 en 1024×600 met een tijdelijk dubbelalbum van 24 nummers. Niet op de echte TV.
+
+## Docker-image op GHCR en releases — 7 november 2026
+- `.github/workflows/release.yml`: een tag `vX.Y.Z` (moet gelijk zijn aan `package.json`) bouwt het image voor amd64 en arm64, publiceert het als `ghcr.io/roeltje/draai:{X.Y.Z, X.Y, latest}` en maakt een GitHub-release met gegenereerde notities. Bouwstap draait native (`$BUILDPLATFORM`), alleen prod-deps per architectuur.
+- `compose.yaml` gebruikt nu het gepubliceerde image (`DRAAI_VERSION` zet een versie vast); `compose.build.yaml` voor zelf bouwen. CI bouwt via die override.
+- Docs: installeren zonder clone, bijwerken met `docker compose pull`, releaseprocedure. YAML gevalideerd; workflow en multi-arch-build nog niet echt gedraaid (geen Docker lokaal). Eerste echte test is de eerste tag.
